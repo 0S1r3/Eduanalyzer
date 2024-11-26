@@ -1,0 +1,785 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-image: url('/static/background.jpg');
+    background-size: cover;
+    background-position: center;
+}
+
+.header {
+    position: relative;
+    display: flex;
+    justify-content: space-between; /* Размещает элементы по краям */
+    align-items: center; /* Выравнивает элементы по вертикали */
+    padding: 10px;
+    background-color: #1f1f1f;
+}
+
+.header a {
+    text-decoration: none;
+    color: #ffffff;
+    padding: 8px 12px;
+    border-radius: 5px;
+    background-color: #0043fd;
+    transition: background-color 0.3s ease;
+    margin-left: 20px; /* Добавляем отступ слева для кнопки */
+}
+
+.header img.header-logo {
+    margin-left: 20px; /* Отступ слева от логотипа */
+    height: auto; /* Автоматическая высота для сохранения пропорций */
+}
+
+.header img {
+    margin-right: 2px; /* Отступ между изображением и кнопкой Главная */
+}
+
+.header a:hover {
+    background-color: #4a6bff;
+}
+
+.container {
+    width: 90%;
+    margin: 0 auto;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 50px;
+    overflow-y: auto;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    font-size: 20px;
+}
+
+.container button {
+    background-color: #008CBA;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.container button:hover {
+    background-color: #005A6E;
+}
+
+.containerForUpload {
+    width: 90%;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.containerTable {
+    width: 90%;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.containerTable table, .containerTable td {
+    border: 1px solid #474747;
+    padding: 8px;
+    text-align: center;
+    background-color: #ffffff;
+}
+
+.containerTable th {
+    border: 1px solid #474747;
+    padding: 8px;
+    text-align: center;
+    background-color: #828eff;
+}
+
+form {
+    margin-bottom: 20px;
+}
+
+input[type="submit"] {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+input[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+.analysis-options {
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.analysis-options select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin: 5px;
+}
+
+.analysis-options button {
+    background-color: #008CBA;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.analysis-options button:hover {
+    background-color: #005A6E;
+}
+
+.upload-area {
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    padding: 30px;
+    background-color: #e0ffe0;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.upload-area input[type="file"] {
+    display: none;
+}
+
+.upload-area:hover {
+    background-color: #d0ffd0;
+    border-color: #04ff00;
+}
+
+
+.start-button {
+    margin-top: 15px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.start-button:hover {
+    background-color: #0056b3;
+}
+
+.settings-btn {
+    background-color: #007bff;
+    border: none;
+    color: white;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0;
+    cursor: pointer;
+    position: fixed;
+    top: 25%;
+    right: 0;
+    transform: translateY(-50%);
+    border-radius: 50%;
+}
+
+.settings-btn img {
+    width: 20px;
+    height: 20px;
+}
+
+.settings-menu {
+    display: none;
+    position: fixed;
+    right: 60px;
+    top: 50%;
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-left: 1px solid #ddd;
+    width: 250px;
+    max-height: 400px; /* Установите максимальную высоту контейнера */
+    overflow-y: auto; /* Добавьте вертикальную прокрутку, если содержимое превышает высоту контейнера */
+    transform: translateY(-50%);
+    /*border-radius: 10px;*/
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    opacity: 0;
+    z-index: 1000; /* Установка z-index для меню настроек */
+}
+
+.slider-container {
+    margin-bottom: 15px;
+}
+
+.slider-container label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.slider-container input,
+.slider-container select {
+    width: 100%;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.slider-container select{
+    padding: 8px;
+}
+
+/* Общий стиль для ползунков слайдера */
+.slider-container input[type="range"] {
+    /* Остальные стили здесь */
+    -webkit-appearance: none; /* Убираем стандартный вид ползунков */
+    appearance: none;
+    width: 100%;
+    height: 8px; /* Высота линии */
+    background: #767676; /* Цвет фона линии */
+    outline: none; /* Убираем обводку */
+    border: none; /* Убираем границу */
+    border-radius: 10px; /* Закругляем края линии */
+}
+
+/* Цветные линии для ползунков */
+.slider-container input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px; /* Ширина ползунка */
+    height: 20px; /* Высота ползунка */
+    background: #ffffff; /* Цвет фона ползунка */
+    border: 1px solid #000000; /* Цвет рамки ползунка */
+    border-radius: 50%; /* Круглые края */
+    cursor: pointer; /* Курсор при наведении */
+    margin-top: -7px; /* Смещаем ползунок вверх, чтобы линия проходила по центру */
+}
+
+/* Применение разных цветов к ползункам */
+/* Ползунок для категории X */
+.slider-container input[type="range"]#thresholdX::-webkit-slider-thumb {
+    background-color: #ff0000; /* Красный цвет для ползунка */
+}
+
+/* Ползунок для категории Y */
+.slider-container input[type="range"]#thresholdY::-webkit-slider-thumb {
+    background-color: #00ff00; /* Зеленый цвет для ползунка */
+}
+
+/* Ползунок для категории Z */
+.slider-container input[type="range"]#thresholdZ::-webkit-slider-thumb {
+    background-color: #0000ff; /* Синий цвет для ползунка */
+}
+
+.slider-container input[type="range"]::-webkit-slider-runnable-track {
+    border-radius: 10px; /* Закругляем края линии */
+    height: 8px; /* Высота линии */
+}
+
+
+
+
+.settings-menu::-webkit-scrollbar {
+    width: 8px;
+}
+
+.settings-menu::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.settings-menu::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.settings-menu::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Новый блок с анимацией */
+.settings-menu.open {
+    display: block;
+    opacity: 1;
+    transform: translateY(-45%) translateX(-25%);
+}
+
+@keyframes ani {
+    0% { right: 40px; width: 0; }
+    100% { right: 0; width: 250px; }
+}
+
+.settings-menu.open {
+    animation: ani 0.4s linear forwards;
+}
+
+.settings-menu h2 {
+    margin-top: 0;
+}
+
+.settings-menu label {
+    display: block;
+    margin-bottom: 10px;
+    margin-top: 15px;
+}
+
+.settings-menu input[type="number"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+#resultTable {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#resultTable th, #resultTable td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+#resultTable th {
+    background-color: #f2f2f2;
+}
+
+.containerTable button {
+    background-color: #007bff; /* Синий цвет фона */
+    color: white; /* Цвет текста */
+    padding: 10px 20px; /* Внутренние отступы */
+    border: none; /* Убираем границу */
+    border-radius: 5px; /* Скругленные углы */
+    font-size: 16px; /* Размер шрифта */
+    cursor: pointer; /* Курсор в виде руки при наведении */
+    transition: background-color 0.3s ease; /* Плавное изменение цвета фона */
+}
+
+.containerTable button:hover {
+    background-color: #0056b3; /* Темно-синий цвет при наведении */
+}
+
+.containerTable button:active {
+    background-color: #004494; /* Еще темнее при нажатии */
+    transform: scale(0.98); /* Легкое уменьшение кнопки при нажатии */
+}
+
+.containerTable button:focus {
+    outline: none; /* Убираем обводку при фокусе */
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.5); /* Добавляем тень при фокусе */
+}
+
+.containerTable1 {
+    width: 90%;
+    margin: 0 auto;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.containerTable1 th {
+    border: 1px solid #474747;
+    padding: 8px;
+    text-align: center;
+    background-color: #828eff;
+}
+
+.containerTable1 table, .containerTable1 td {
+    border: 1px solid #474747;
+    padding: 8px;
+    text-align: center;
+}
+
+.row-category-a {
+    background-color: rgb(49, 255, 49);
+}
+
+.row-category-b {
+    background-color: rgb(255, 255, 66);
+}
+
+.row-category-c {
+    background-color: rgb(255, 50, 50);
+}
+
+.row-category-x {
+    background-color: rgb(49, 255, 49);
+}
+
+.row-category-y {
+    background-color: rgb(255, 255, 66);
+}
+
+.row-category-z {
+    background-color: rgb(255, 50, 50);
+}
+
+
+
+.row-category-ax {
+    background-color: rgb(49, 255, 49);
+}
+
+.row-category-ay {
+    background-color: rgb(150, 255, 49);
+}
+
+.row-category-az {
+    background-color: rgb(207, 255, 95);
+}
+
+.row-category-bx {
+    background-color: rgb(255, 255, 0);
+}
+
+.row-category-by {
+    background-color: rgb(255, 227, 66);
+}
+
+.row-category-bz {
+    background-color: rgb(255, 183, 0);
+}
+
+.row-category-cx {
+    background-color: rgb(255, 72, 0);
+}
+
+.row-category-cy {
+    background-color: rgb(255, 87, 65);
+}
+
+.row-category-cz {
+    background-color: rgb(255, 0, 0);
+}
+
+
+#recommendations {
+    width: 90%;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+}
+
+#recommendations h2 {
+    color: #333;
+    font-size: 24px;
+    margin-bottom: 10px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#recommendations p {
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+#recommendations p strong {
+    font-weight: bold;
+}
+
+/* Цветовая кодировка групп ABC */
+#recommendations .group-A {
+    color: green;
+}
+
+#recommendations .group-B {
+    color: yellow;
+}
+
+#recommendations .group-C {
+    color: red;
+}
+
+#recommendations .group-AX {
+    background-color: rgb(49, 255, 49);
+}
+
+#recommendations .group-AY {
+    background-color: rgb(150, 255, 49);
+}
+
+#recommendations .group-AZ  {
+    background-color: rgb(207, 255, 95);
+}
+
+#recommendations .group-BX {
+    background-color: rgb(255, 255, 0);
+}
+
+#recommendations .group-BY {
+    background-color: rgb(255, 227, 66);
+}
+
+#recommendations .group-BZ {
+    background-color: rgb(255, 183, 0);
+}
+
+#recommendations .group-CX {
+    background-color: rgb(255, 72, 0);
+}
+
+#recommendations .group-CY {
+    background-color: rgb(255, 87, 65);
+}
+
+#recommendations .group-CZ {
+    background-color: rgb(255, 0, 0);
+}
+
+
+
+
+/* Форма загрузки фото */
+.containerForUploadPhotos {
+    width: 90%;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+#photoUploadArea {
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    padding: 30px;
+    background-color: #f7f9fc;
+    cursor: pointer;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+#photoUploadArea:hover {
+    background-color: #edf3ff;
+    border-color: #007bff;
+}
+
+#photoUploadArea img {
+    width: 50px;
+    margin-bottom: 10px;
+}
+
+.photo-preview-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 15px;
+    justify-content: center;
+    position: relative;
+}
+
+.photo-preview-container .photo-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100px;
+    height: 100px;
+    overflow: visible; /* Позволяем увеличенным элементам выходить за пределы контейнера */
+}
+
+/* Увеличение фото */
+.photo-preview-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+    position: relative;
+    z-index: 1; /* Фото всегда на заднем плане */
+}
+
+.photo-preview-container .remove-photo {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: red;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 14px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    z-index: 10; /* Крестик всегда над фото */
+}
+
+.photo-preview-container img:hover {
+    transform: scale(2); /* Увеличение изображения */
+    border-color: #007bff;
+    z-index: 10; /* Поверх всех других изображений */
+    transform-origin: top left; /* Масштабирование от верхнего левого угла */
+}
+
+/* Крестик позиционируется в верхнем правом углу */
+.photo-preview-container .photo-wrapper:hover .remove-photo {
+    transform: scale(1.1); /* Увеличение изображения */
+    z-index: 20; /* Крестик выше увеличенного фото */
+    bottom: calc((90% * 2) - 5px); /* Увеличиваем отступ от нижней границы фото */
+    left: calc((90% * 2) + 5px); /* Увеличиваем отступ от левой границы фото */
+}
+
+/* Скрытие остальных крестиков */
+.photo-preview-container:hover .remove-photo {
+    opacity: 0; /* Скрываем все крестики */
+    pointer-events: none; /* Убираем интерактивность */
+}
+
+.photo-preview-container .photo-wrapper:hover .remove-photo {
+    opacity: 1; /* Показываем крестик только для активного фото */
+    pointer-events: auto; /* Включаем интерактивность для активного крестика */
+}
+
+/* Отключаем взаимодействие с другими фото */
+.photo-preview-container:hover .photo-wrapper img {
+    pointer-events: none;
+    transition: none;
+}
+
+/* Изменение поведения изображения: оно остается увеличенным даже при наведении на крестик */
+.photo-preview-container .photo-wrapper:hover img {
+    transform: scale(2); /* Увеличенное изображение остается увеличенным */
+    border-color: #007bff;
+    z-index: 10; /* Поверх всех других изображений */
+    transform-origin: top left; /* Масштабирование от верхнего левого угла */
+    pointer-events: auto; /* Только увеличенное фото интерактивно */
+}
+
+/* Скрыть крестик, когда курсор не над изображением или крестиком */
+.photo-preview-container .photo-wrapper:hover img {
+    transition: none;
+}
+
+.hide {
+    display: none !important;
+}
+
+.upload-button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.upload-button:hover {
+    background-color: #0056b3;
+}
+
+
+
+
+/* Стили для выпадающих списков */
+.styled-select select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+label {
+    margin-bottom: 5px;
+}
+
+.styled-select select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+/* Стили для календаря */
+/* Общие стили календаря */
+.calendar-wrapper {
+    width: 90%;
+    max-width: 600px; /* Ограничение ширины для эстетики */
+    margin: 20px auto; /* Центрирование по горизонтали */
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+    text-align: center; /* Центрирование содержимого */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Легкая тень для стиля */
+}
+
+#selectedDatesList {
+    margin-top: 15px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f5f5f5;
+    font-size: 14px;
+    color: #333;
+    display: flex;
+    flex-wrap: wrap; /* Если даты не помещаются, переходят на новую строку */
+    justify-content: center; /* Центрирование внутри блока */
+    gap: 10px; /* Расстояние между элементами */
+}
+
+#selectedDatesList span {
+    display: inline-block;
+    margin: 5px;
+    padding: 5px 10px;
+    background-color: #007bff;
+    color: #fff;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: bold;
+    white-space: nowrap; /* Запрещает перенос текста внутри даты */
+}
+
+#calendarInput {
+    display: flex;
+    justify-content: center; /* Центрирование по горизонтали */
+    align-items: center; /* Центрирование по вертикали */
+    margin: 0 auto; /* Центрирование */
+    text-align: center; /* Если календарь использует текст */
+    width: 100%;
+}
+
+/* Для самого календаря */
+.flatpickr-calendar {
+    margin: 0 auto; /* Центрирование календаря */
+    text-align: center; /* Центрирование текста внутри календаря */
+}

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/profile.css">
+    <script src="js/scripts.js" defer></script>
+    <script src="js/profile.js" defer></script>
+    <title>XYZ-анализ успеваемости и посещаемости</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+</head>
+
+<body>
+    <div class="header">
+        <div class="profile-container">
+            <div class="profile-icon" id="profileIcon">
+                <img id="userPhoto" src="/static/profile.png" alt="Профиль" />
+            </div>
+            <div class="profile-dropdown" id="profileDropdown">
+                <a href="{{ url_for('profile') }}" class="dropdown-button">Профиль</a>
+                <a href="{{ url_for('logout') }}" class="dropdown-button">Выход</a>
+            </div>
+        </div>
+
+        <img src="/static/favicon.png" alt="Логотип" class="header-logo" />
+        <a href="/main">Главная</a>
+    </div>
+
+    <div class="container">
+        <h1>Загрузка данных учеников</h1>
+        <div class="analysis-options">
+            <select id="classSelect">
+                <option value="">Выберите класс</option>
+                <!-- Динамически заполняемые классы -->
+            </select>
+            <select id="classLetterSelect">
+                <option value="">Выберите букву класса</option>
+                <!-- Динамически заполняемые буквы классов -->
+            </select>
+            <select id="subjectSelect">
+                <option value="">Выберите предмет</option>
+                <!-- Динамически заполняемые предметы -->
+            </select>
+            <select id="teacherSelect">
+                <option value="">Выберите преподавателя</option>
+                <!-- Динамически заполняемые преподаватели -->
+            </select>
+            <select id="performanceSelect">
+                <option value="grades">Успеваемость</option>
+                <option value="attendance">Посещаемость</option>
+            </select>
+            <select id="periodSelect">
+                <option value="">Выберите период</option>
+                <!-- Динамически заполняемые периоды -->
+            </select>
+            <select id="periodSelectYear">
+                <option value="">Выберите год обучения</option>
+                <!-- Динамически заполняемые года обучения -->
+            </select>
+        </div>
+        <button onclick="loadData()">Загрузить данные</button>
+    </div>
+
+    <div class="containerForUpload">
+        <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+            <div class="upload-area" id="uploadArea">
+                <img src="/static/upload.png" alt="Upload Icon" width="50">
+                <p>Перетащите файлы сюда</p>
+                <label for="fileInput" style="cursor: pointer; color: #007bff;">Выберите файл</label>
+                <input type="file" id="fileInput" style="display: none;">
+            </div>
+            <button class="start-button">Загрузить файл Excel</button>
+        </form>
+    </div>
+
+    <div class="containerForUploadPhotos">
+        <form id="photoUploadForm" action="/upload_photos" method="post" enctype="multipart/form-data">
+            <div class="photo-upload-area" id="photoUploadArea">
+                <img src="/static/upload_photo.png" alt="Upload Icon" width="50">
+                <p>Перетащите фото сюда</p>
+                <label for="photoInput" class="photo-input-label" style="cursor: pointer; color: #007bff;">Выберите фото</label>
+                <input type="file" id="photoInput" name="photos" multiple style="display: none;">
+            </div>
+            <div id="photoPreviewContainer" class="photo-preview-container">
+                <!-- Миниатюры загруженных фото будут добавлены сюда -->
+            </div>
+            <button class="upload-button" type="submit">Загрузить фото</button>
+        </form>
+    </div>
+
+    <div class="containerTable" style="display: none;">
+        <table id="studentTable">
+            <thead>
+                <!-- Headers will be dynamically populated here -->
+            </thead>
+            <tbody>
+                <!-- Data will be dynamically populated here -->
+            </tbody>
+        </table>
+        <button onclick="analyzeXYZData()">Выполнить XYZ-анализ</button>
+    </div>
+
+    <button id="settingsBtn" class="settings-btn">
+        <img src="/static/settings.png">
+        <i class="fas fa-cog"></i>
+    </button>
+    <div id="settingsMenu" class="settings-menu">
+        <h2>Настройки XYZ-анализа</h2>
+        <div class="slider-container">
+            <label for="analysisType">Тип анализа:</label>
+            <select id="analysisType">
+                <option value="attendance">Посещаемость</option>
+                <option value="performance">Успеваемость</option>
+            </select>
+        </div>
+
+        <div class="slider-container">
+            <label for="startQuarter">Начальный период:</label>
+            <select id="startQuarter">
+                <optgroup label="Четверти">
+                    <option value="Q1">1 четверть</option>
+                    <option value="Q2">2 четверть</option>
+                    <option value="Q3">3 четверть</option>
+                    <option value="Q4">4 четверть</option>
+                </optgroup>
+                <optgroup label="Полугодия">
+                    <option value="H1">1 полугодие</option>
+                    <option value="H2">2 полугодие</option>
+                </optgroup>
+                <optgroup label="Итог">
+                    <option value="I">Итог за период</option>
+                </optgroup>
+            </select>
+        </div>
+        
+        <!-- Dropdown for selecting end quarter -->
+        <div class="slider-container">
+            <label for="endQuarter">Конечный период:</label>
+            <select id="endQuarter">
+                <optgroup label="Четверти">
+                    <option value="Q1">1 четверть</option>
+                    <option value="Q2">2 четверть</option>
+                    <option value="Q3">3 четверть</option>
+                    <option value="Q4">4 четверть</option>
+                </optgroup>
+                <optgroup label="Полугодия">
+                    <option value="H1">1 полугодие</option>
+                    <option value="H2">2 полугодие</option>
+                </optgroup>
+                <optgroup label="Итог">
+                    <option value="I">Итог за период</option>
+                </optgroup>
+            </select>
+        </div>
+
+        <!-- Slider for category X threshold -->
+        <div class="slider-container">
+            <label for="thresholdX">Порог категории X:</label>
+            <input type="range" id="thresholdX" min="0" max="100" value="10"
+                oninput="updateThresholdValue('thresholdX', 'thresholdXValue')">
+            <span id="thresholdXValue">10%</span>
+        </div>
+
+        <!-- Slider for category Y threshold -->
+        <div class="slider-container">
+            <label for="thresholdY">Порог категории Y:</label>
+            <input type="range" id="thresholdY" min="0" max="100" value="25"
+                oninput="updateThresholdValue('thresholdY', 'thresholdYValue')">
+            <span id="thresholdYValue">25%</span>
+        </div>
+
+        <!-- Slider for category Z threshold -->
+        <div class="slider-container">
+            <label for="thresholdZ">Порог категории Z:</label>
+            <input type="range" id="thresholdZ" min="0" max="100" value="65"
+                oninput="updateThresholdValue('thresholdZ', 'thresholdZValue')">
+            <span id="thresholdZValue">65%</span>
+        </div>
+    </div>
+
+    <h1 id="analysisHeader" style="display: none;">XYZ-анализ успеваемости</h1>
+    <div class="containerTable1" style="display: none;">
+        <table id="resTable">
+            <thead>
+
+            </thead>
+            <tbody>
+                <!-- Результаты ABC-анализа будут отображены здесь -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="containerTable1" style="display: none;">
+        <div id="chart_div" style="width: 100%; height: 700px;"></div>
+    </div>
+
+    <div id="recommendations" style="display: none;">
+        <h2>Рекомендации по группам XYZ-анализа:</h2>
+        <p><strong class="group-A">Группа X:</strong> Ученики с высокими показателями, которые могут требовать дополнительных вызовов и задач для удержания их заинтересованности и продвижения вперед.</p>
+        <p><strong class="group-B">Группа Y:</strong> Ученики с средними показателями, которые нуждаются в некоторой поддержке и стимуле для улучшения своих результатов.</p>
+        <p><strong class="group-C">Группа Z:</strong> Ученики с низкими показателями, которым требуется индивидуальный подход и дополнительные усилия для достижения учебных целей.</p>
+    </div>
+    
+</body>
+
+</html>

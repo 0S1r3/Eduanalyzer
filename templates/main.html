@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Анализ успеваемости и посещаемости</title>
+    <link rel="stylesheet" href="css/animatedButtons.css">
+    <link rel="stylesheet" href="css/profile.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="js/modal.js" defer></script>
+    <script src="js/profile.js" defer></script>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="profile-container">
+        <div class="profile-icon" id="profileIcon">
+            <img id="userPhoto" src="/static/profile.png" alt="Профиль" />
+        </div>
+        <div class="profile-dropdown" id="profileDropdown">
+            <a href="{{ url_for('profile') }}" class="dropdown-button">Профиль</a>
+            <a href="{{ url_for('logout') }}" class="dropdown-button">Выход</a>
+        </div>
+    </div>
+    
+    <div class="header">
+    </div>
+    <div class="button-container">
+        <a href="{{ url_for('abc_page') }}" class="animated-button">
+            <img src="/static/abc.png" alt="ABC-анализ">
+            <span>ABC Анализ</span>
+        </a>
+        <a href="{{ url_for('xyz_page') }}" class="animated-button">
+            <img src="/static/xyz.png" alt="XYZ-анализ">
+            <span>XYZ Анализ</span>
+        </a>
+        <a href="{{ url_for('abcxyz_page') }}" class="animated-button">
+            <img src="/static/abcxyz.png" alt="ABC/XYZ-анализ">
+            <span>ABC/XYZ Анализ</span>
+        </a>
+    </div>
+
+    <div id="authModal" class="modal show" data-authorized="{{ authorized|tojson }}" onclick="event.stopPropagation()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Авторизация / Регистрация</h2>
+                <label class="switch">
+                    <input type="checkbox" id="switch_enter">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+
+            <!-- Выводим флеш-сообщения -->
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for message in messages %}
+                            <p>{{ message }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            <!-- Блок для формы авторизации -->
+            <div class="modal-body" id="loginForm">
+                <form id="authForm" method="POST" action="{{ url_for('login') }}">
+                    <input type="text" name="username" placeholder="Логин" required>
+                    <input type="password" name="password" placeholder="Пароль" required>
+                    <button type="submit">Войти</button>
+                </form>
+            </div>
+            
+            <!-- Блок для формы регистрации -->
+            <div class="modal-body hide" id="registerForm">
+                <form method="POST" action="{{ url_for('register') }}" id="roleForm" enctype="multipart/form-data">
+                    <h3>Выберите роль</h3>
+                    <div class="role-options">
+                        <label><input type="radio" name="role" value="student" checked>Ученик</label>
+                        <label><input type="radio" name="role" value="teacher">Учитель</label>
+                    </div>
+                    <div id="studentFields">
+                        <input type="text" name="surname" placeholder="Фамилия" required>
+                        <input type="text" name="name" placeholder="Имя" required>
+                        <input type="text" name="patronymic" placeholder="Отчество" required>
+                        <input type="text" name="class" placeholder="Класс" required>
+                        <div id="photoContainer">
+                            <label for="photoInputStudent" class="photo-label">
+                                <span>Выберите фото</span>
+                                <input type="file" name="photo" id="photoInputStudent" accept="image/*">
+                            </label>
+                            <img id="photoPreviewStudent" class="hide" src="#" alt="Показ фото">
+                        </div>                        
+                        <input type="text" name="username" placeholder="Логин" required>
+                        <input type="password" name="password" placeholder="Пароль" required>
+                    </div>
+                    <div id="teacherFields" class="hide">
+                        <input type="text" name="surname" placeholder="Фамилия" required>
+                        <input type="text" name="name" placeholder="Имя" required>
+                        <input type="text" name="patronymic" placeholder="Отчество" required>
+                        <div id="photoContainer">
+                            <label for="photoInputTeacher" class="photo-label">
+                                <span>Выберите фото</span>
+                                <input type="file" name="photo" id="photoInputTeacher" accept="image/*">
+                            </label>
+                            <img id="photoPreviewTeacher" class="hide" src="#" alt="Показ фото">
+                        </div> 
+                        <h3>Выберите предметы:</h3>
+                            <div class="checkbox-group">
+                                {% for subject in subjects %}
+                                    <label class="custom-checkbox">
+                                        <input type="checkbox" name="subjects" value="{{ subject.id_subject }}">
+                                        <span class="checkmark"></span>
+                                        {{ subject.name }}
+                                    </label><br>
+                                {% endfor %}
+                            </div>
+                        <input type="text" name="username" placeholder="Логин" required>
+                        <input type="password" name="password" placeholder="Пароль" required>
+                    </div>
+                    <button type="submit">Зарегистрироваться</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    
+    
+</body>
+</html>

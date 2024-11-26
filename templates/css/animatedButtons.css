@@ -1,0 +1,472 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-image: url('/static/background.jpg');
+    background-size: cover;
+    background-position: center;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden; /* Скрывает горизонтальную полосу прокрутки */
+}
+
+.button-container {
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 100px;
+    display: flex;
+    justify-content: center; /* Центрирование дочерних элементов по горизонтали */
+    gap: 20px;
+}
+
+.animated-button {
+    display: flex;
+    flex-direction: column; /* Элементы располагаются в столбец */
+    align-items: center;
+    justify-content: center; /* Центрирование содержимого по вертикали */
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    text-decoration: none;
+    color: #333;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    width: 200px;
+    height: 200px;
+    font-size: 20px;
+}
+
+.animated-button:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+}
+
+.animated-button img {
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    margin-bottom: 20px;
+}
+
+.header {
+    position: relative;
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px;
+    background-color: #f8f8f8;
+}
+
+.account-icon {
+    cursor: pointer;
+    position: relative;
+    padding: 10px;
+    background-color: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 50px; /* Adjusted to ensure the dropdown appears below the icon */
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    border-radius: 8px; /* Added border-radius for a smoother look */
+}
+
+.dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+.dropdown-content a:hover {
+    background-color: #f1f1f1;
+}
+
+/* Основные стили для модального окна */
+#authModal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+#authModal.show {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background: linear-gradient(135deg, #ffffff, #e0f7ff);
+    margin: auto;
+    padding: 20px; /* Уменьшено для большей прокрутки */
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh; /* Ограничение высоты */
+    overflow-y: auto; /* Прокрутка по вертикали */
+    position: relative;
+    animation: scaleUp 0.5s ease-in-out;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+
+.modal-content:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes scaleUp {
+    from { transform: scale(0.9); opacity: 0.7; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: #333;
+    font-weight: 700;
+    font-size: 24px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Анимация и стили для полей ввода */
+.modal-content input[type="text"],
+.modal-content input[type="password"],
+.modal-content input[type="file"] {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-sizing: border-box;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    font-size: 16px;
+    background-color: #f9f9f9;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
+}
+
+.modal-content input[type="text"]:focus,
+.modal-content input[type="password"]:focus,
+.modal-content input[type="file"]:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.5), inset 0 0 5px rgba(0, 123, 255, 0.2);
+}
+
+input.error {
+    border-color: #ff4d4d;
+    box-shadow: 0 0 8px rgba(255, 77, 77, 0.4), inset 0 0 5px rgba(255, 77, 77, 0.2);
+}
+
+input.success {
+    border-color: #28a745;
+    box-shadow: 0 0 8px rgba(40, 167, 69, 0.5), inset 0 0 5px rgba(40, 167, 69, 0.3);
+}
+
+/* Кнопка отправки с анимацией */
+.modal-content button[type="submit"] {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: #fff;
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: background 0.3s, transform 0.3s, box-shadow 0.3s;
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content button[type="submit"]:hover {
+    background: linear-gradient(135deg, #0056b3, #003d7a);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Переключатель (switch) с анимацией */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 55px;
+    height: 30px;
+    margin-top: 5px;
+    transition: background-color 0.4s;
+}
+
+.switch input {
+    display: none;
+}
+
+.slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: background-color 0.4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 24px;
+    width: 24px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.4s, background-color 0.3s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+input:checked + .slider {
+    background-color: #007bff;
+}
+
+input:checked + .slider:before {
+    transform: translateX(25px);
+    background-color: #ffffff;
+}
+
+/* Анимация для опций выбора роли */
+.role-options {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 25px;
+    opacity: 0;
+    animation: fadeSlideIn 0.5s ease forwards;
+}
+
+@keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.role-options label {
+    font-size: 18px;
+    font-weight: 500;
+    color: #333;
+    cursor: pointer;
+    padding: 10px;
+    transition: color 0.3s, transform 0.3s;
+}
+
+.role-options label:hover {
+    color: #007bff;
+    transform: scale(1.1);
+}
+
+/* Анимация открытия модального окна */
+.modal-content {
+    animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.hide {
+    display: none;
+}
+
+/* Чекбоксы для предметов */
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.custom-checkbox {
+    position: relative;
+    display: inline-block;
+    padding-left: 35px; /* Отступ для чекбокса */
+    cursor: pointer;
+    user-select: none; /* Запретить выделение текста */
+    margin: 10px 0; /* Отступ между чекбоксами */
+}
+
+.custom-checkbox input {
+    position: absolute;
+    opacity: 0; /* Скрыть стандартный чекбокс */
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 25px;
+    width: 25px;
+    background-color: #eee; /* Цвет фона чекбокса */
+    border-radius: 5px; /* Скругление углов */
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.custom-checkbox:hover .checkmark {
+    background-color: #d4d4d4; /* Цвет при наведении */
+}
+
+.custom-checkbox input:checked ~ .checkmark {
+    background-color: #007bff; /* Цвет при отмеченном состоянии */
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Тень для эффекта */
+}
+
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+.custom-checkbox input:checked ~ .checkmark:after {
+    display: block;
+}
+
+.custom-checkbox .checkmark:after {
+    left: 9px;
+    top: 4px;
+    width: 6px;
+    height: 12px;
+    border: solid white; /* Цвет галочки */
+    border-width: 0 3px 3px 0; /* Ширина линий галочки */
+    transform: rotate(45deg); /* Поворот галочки */
+    transition: all 0.3s ease; /* Анимация для галочки */
+}
+
+/* Анимация при добавлении класса active */
+.custom-checkbox input:checked ~ .checkmark:after {
+    animation: fadeIn 0.3s forwards; /* Добавляем анимацию */
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0; /* Начальная непрозрачность */
+        transform: translateY(-5px); /* Смещение вверх */
+    }
+    to {
+        opacity: 1; /* Конечная непрозрачность */
+        transform: translateY(0); /* Восстановление позиции */
+    }
+}
+
+
+.flash-messages {
+    background-color: #f8d7da;
+    padding: 5px 10px;  /* Уменьшаем паддинги */
+    margin: 20px;
+    border-radius: 5px;
+    color: #721c24;
+    font-size: 14px;  /* Уменьшаем размер шрифта */
+    max-height: 40px;  /* Устанавливаем максимальную высоту 25px */
+    overflow: hidden;
+    opacity: 1;
+    animation: fadeOut 5s ease-out forwards;
+}
+
+@keyframes fadeOut {
+    0% {
+        opacity: 1;
+        max-height: 40px;  /* Начальная высота */
+        padding: 5px 10px;  /* Начальный padding */
+    }
+    80% {
+        opacity: 1;
+        max-height: 40px;
+        padding: 5px 10px;
+    }
+    100% {
+        opacity: 0;
+        max-height: 0;
+        padding: 0;  /* Убираем padding */
+    }
+}
+
+/* Для загрузки фото */
+#photoContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-top:10px;
+    margin-bottom:10px;
+}
+
+.photo-label {
+    display: inline-block;
+    padding: 10px 20px;
+    color: #007bff;
+    background-color: #f1f1f1;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+    text-align: center;
+    font-size: 16px;
+}
+
+.photo-label:hover {
+    background-color: #e0e0e0;
+    transform: translateY(-2px);
+}
+
+#photoInputStudent {
+    display: none; /* Скрываем фактическое поле загрузки файла */
+}
+
+#photoInputTeacher {
+    display: none; /* Скрываем фактическое поле загрузки файла */
+}
+
+/* Стиль превью изображения */
+#photoPreviewStudent {
+    width: 150px;
+    height: 150px;
+    border-radius: 10px;
+    object-fit: cover;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#photoPreviewTeacher {
+    width: 150px;
+    height: 150px;
+    border-radius: 10px;
+    object-fit: cover;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}

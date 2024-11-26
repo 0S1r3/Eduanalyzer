@@ -1,0 +1,86 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f8ff; /* Светло-синий фон страницы */
+    color: #333;
+    margin: 0;
+}
+
+.profile-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px; /* Расстояние между контейнерами */
+}
+
+/* Основной контейнер профиля */
+.profile-main-container {
+    background-color: #ffffff; /* Белый фон для профиля */
+    border-radius: 10px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    text-align: center;
+    width: 400px;
+    margin-top: 5px;
+}
+
+/* Фото профиля с логином справа */
+.profile-main-container img {
+    border-radius: 50%; /* Круглая форма для фото профиля */
+    width: 250px;
+    height: 250px;
+    object-fit: cover;
+    border: 3px solid #4682b4; /* Синяя рамка вокруг фото */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Логин под фотографией */
+h2 {
+    color: #333;
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-top: 15px;
+}
+
+/* Кнопка Главная */
+.main-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 10px 20px;
+    background-color: #0043fd; /* Цвет фона */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    text-decoration: none;
+    box-shadow: 0 4px 8px rgba(0, 67, 253, 0.3);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.main-button:hover {
+    background-color: #003bbf;
+    box-shadow: 0 6px 12px rgba(0, 59, 191, 0.4);
+}
+
+h3 {
+    color: #0048ffc8;
+    font-size: 1.4em;
+    margin-top: 20px;
+    font-weight: normal;
+}
+
+.profile-info-container {
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 15px;
+    width: 400px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.profile-info-container h3 {
+    color: #0048ffc8;
+    font-size: 1.4em;
+    margin: 0;
+}

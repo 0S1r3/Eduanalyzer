@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль</title>
+    <link rel="stylesheet" href="css/profile-main.css">
+    <link rel="stylesheet" href="css/profile.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="js/profile.js" defer></script>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="profile-container">
+        <div class="profile-icon" id="profileIcon">
+            <img id="userPhoto" src="/static/profile.png" alt="Профиль" />
+        </div>
+        <div class="profile-dropdown" id="profileDropdown">
+            <a href="{{ url_for('profile') }}" class="dropdown-button">Профиль</a>
+            <a href="{{ url_for('logout') }}" class="dropdown-button">Выход</a>
+        </div>
+        <a href="/main" class="main-button">Главная</a>
+    </div>
+
+    <div class="profile-wrapper">
+        <div class="profile-main-container">
+            <img id="userPhotoMain" src="/static/profile.png" alt="Профиль" />
+            <h2>{{ user_last_name }} {{ user_first_name }}{% if user_middle_name %} {{ user_middle_name }}{% endif %}</h2>
+        </div>
+
+        <div class="profile-info-container">
+            <h3>
+                {% if user_role == 'teacher' %}
+                    Проводимые анализы
+                {% elif user_role == 'student' %}
+                    Статистика успеваемости и посещаемости
+                {% endif %}
+            </h3>
+        </div>
+    </div>
+</body>
+</html>

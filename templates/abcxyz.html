@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/profile.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="js/scripts.js" defer></script>
+    <script src="js/abcxyz.js" defer></script>
+    <script src="js/profile.js" defer></script>
+    <title>ABC/XYZ-анализ успеваемости и посещаемости</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="header">
+        <div class="profile-container">
+            <div class="profile-icon" id="profileIcon">
+                <img id="userPhoto" src="/static/profile.png" alt="Профиль" />
+            </div>
+            <div class="profile-dropdown" id="profileDropdown">
+                <a href="{{ url_for('profile') }}" class="dropdown-button">Профиль</a>
+                <a href="{{ url_for('logout') }}" class="dropdown-button">Выход</a>
+            </div>
+        </div>
+
+        <img src="/static/favicon.png" alt="Логотип" class="header-logo" />
+        <a href="/main">Главная</a>
+    </div>
+
+    <div class="container">
+        <h1>Загрузка данных учеников</h1>
+        <div class="analysis-options">
+            <select id="classSelect">
+                <option value="">Выберите класс</option>
+                <!-- Динамически заполняемые классы -->
+            </select>
+            <select id="classLetterSelect">
+                <option value="">Выберите букву класса</option>
+                <!-- Динамически заполняемые буквы классов -->
+            </select>
+            <select id="subjectSelect">
+                <option value="">Выберите предмет</option>
+                <!-- Динамически заполняемые предметы -->
+            </select>
+            <select id="teacherSelect">
+                <option value="">Выберите преподавателя</option>
+                <!-- Динамически заполняемые преподаватели -->
+            </select>
+            <select id="performanceSelect" style="display: none;">
+                <option value="grades">Успеваемость</option>
+                <option value="attendance">Посещаемость</option>
+            </select>
+            <select id="periodSelect">
+                <option value="">Выберите период</option>
+                <!-- Динамически заполняемые периоды -->
+            </select>
+            <select id="periodSelectYear">
+                <!-- Динамически заполняемые года обучения -->
+            </select>
+        </div>
+        <button onclick="loadDataABCXYZ()">Загрузить данные</button>
+    </div>    
+
+    <div class="containerForUpload">
+        <form id="uploadFormABCXYZ" action="/uploadabcxyz" method="post" enctype="multipart/form-data">
+            <div class="upload-area" id="uploadArea">
+                <img src="/static/upload.png" alt="Upload Icon" width="50">
+                <p>Перетащите файлы сюда</p>
+                <label for="fileInput" style="cursor: pointer; color: #007bff;">Выберите файл</label>
+                <input type="file" id="fileInput" style="display: none;">
+            </div>
+            <button class="start-button">Загрузить файл Excel</button>
+        </form>
+    </div>
+
+    <div class="containerForUploadPhotos">
+        <form id="photoUploadForm" action="/upload_photos" method="post" enctype="multipart/form-data">
+            <div class="photo-upload-area" id="photoUploadArea">
+                <img src="/static/upload_photo.png" alt="Upload Icon" width="50">
+                <p>Перетащите фото сюда</p>
+                <label for="photoInput" class="photo-input-label" style="cursor: pointer; color: #007bff;">Выберите фото</label>
+                <input type="file" id="photoInput" name="photos" multiple style="display: none;">
+            </div>
+            <div id="photoPreviewContainer" class="photo-preview-container">
+                <!-- Миниатюры загруженных фото будут добавлены сюда -->
+            </div>
+            <button class="upload-button" type="submit">Загрузить фото</button>
+        </form>
+    </div>
+
+    <h1 id="analysisHeader1" style="display: none;">Успеваемость учащихся</h1>
+    <div class="containerTable" style="display: none;">
+        <table id="studentTablePerf">
+            <thead>
+                    <!-- Headers will be dynamically populated here -->
+            </thead>
+            <tbody>
+                <!-- Data will be dynamically populated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <h1 id="analysisHeader2" style="display: none;">Посещаемость учащихся</h1>
+    <div class="containerTable" style="display: none;">
+        <table id="studentTableAttend">
+            <thead>
+                <!-- Headers will be dynamically populated here -->
+            </thead>
+            <tbody>
+                <!-- Data will be dynamically populated here -->
+            </tbody>
+        </table>
+        <button onclick="analyzeABCXYZData()">Выполнить ABC/XYZ-анализ</button>
+    </div>
+
+    <button id="settingsBtn" class="settings-btn">
+        <img src="/static/settings.png">
+        <i class="fas fa-cog"></i>
+    </button>
+    <div id="settingsMenu" class="settings-menu">
+        <h2>Настройки ABC/XYZ-анализа</h2>
+        <div class="slider-container">
+            <label for="thresholdA">Порог категории A:</label>
+            <input type="number" id="thresholdA" value="0.7" step="0.05" min="0" max="1">
+        </div>
+        <div class="slider-container">
+            <label for="thresholdB">Порог категории B:</label>
+            <input type="number" id="thresholdB" value="0.2" step="0.05" min="0" max="1">
+        </div>
+        <div class="slider-container">
+            <label for="thresholdC">Порог категории C:</label>
+            <input type="number" id="thresholdC" value="0.1" step="0.05" min="0" max="1">
+        </div>        
+        <div class="slider-container">
+            <label for="analysisMeasure">Мера (ABC-анализа):</label>
+            <select id="analysisMeasure">
+                <option value="averageGrade">Средняя оценка</option>
+                <option value="gradePeriod">Оценка за период</option>
+                <option value="quarter1">1 четверть</option>
+                <option value="quarter2">2 четверть</option>
+                <option value="quarter3">3 четверть</option>
+                <option value="quarter4">4 четверть</option>
+                <option value="year">Год</option>
+                <option value="medium1">1 полугодие</option>
+                <option value="medium2">2 полугодие</option>
+                <option value="yearTotal">Итог.</option>
+                <option value="periodTotal">Итог за период</option>
+            </select>
+        </div>
+
+        <div class="slider-container">
+            <label for="startQuarter">Начальный период:</label>
+            <select id="startQuarter">
+                <optgroup label="Четверти">
+                    <option value="Q1">1 четверть</option>
+                    <option value="Q2">2 четверть</option>
+                    <option value="Q3">3 четверть</option>
+                    <option value="Q4">4 четверть</option>
+                </optgroup>
+                <optgroup label="Полугодия">
+                    <option value="H1">1 полугодие</option>
+                    <option value="H2">2 полугодие</option>
+                </optgroup>
+                <optgroup label="Итог">
+                    <option value="I">Итог за период</option>
+                </optgroup>
+            </select>
+        </div>
+        
+        <!-- Dropdown for selecting end quarter -->
+        <div class="slider-container">
+            <label for="endQuarter">Конечный период:</label>
+            <select id="endQuarter">
+                <optgroup label="Четверти">
+                    <option value="Q1">1 четверть</option>
+                    <option value="Q2">2 четверть</option>
+                    <option value="Q3">3 четверть</option>
+                    <option value="Q4">4 четверть</option>
+                </optgroup>
+                <optgroup label="Полугодия">
+                    <option value="H1">1 полугодие</option>
+                    <option value="H2">2 полугодие</option>
+                </optgroup>
+                <optgroup label="Итог">
+                    <option value="I">Итог за период</option>
+                </optgroup>
+            </select>
+        </div>
+        
+
+        <!-- Slider for category X threshold -->
+        <div class="slider-container">
+            <label for="thresholdX">Порог категории X:</label>
+            <input type="range" id="thresholdX" min="0" max="100" value="10"
+                oninput="updateThresholdValue('thresholdX', 'thresholdXValue')">
+            <span id="thresholdXValue">10%</span>
+        </div>
+
+        <!-- Slider for category Y threshold -->
+        <div class="slider-container">
+            <label for="thresholdY">Порог категории Y:</label>
+            <input type="range" id="thresholdY" min="0" max="100" value="25"
+                oninput="updateThresholdValue('thresholdY', 'thresholdYValue')">
+            <span id="thresholdYValue">25%</span>
+        </div>
+
+        <!-- Slider for category Z threshold -->
+        <div class="slider-container">
+            <label for="thresholdZ">Порог категории Z:</label>
+            <input type="range" id="thresholdZ" min="0" max="100" value="65"
+                oninput="updateThresholdValue('thresholdZ', 'thresholdZValue')">
+            <span id="thresholdZValue">65%</span>
+        </div>
+    </div>
+    
+
+    <h1 id="analysisHeader" style="display: none;">XYZ/ABC-анализ успеваемости и посещаемости</h1>
+    <div class="containerTable1" style="display: none;">
+        <table id="resTable">
+            <thead>
+
+            </thead>
+            <tbody>
+                <!-- Результаты ABC/XYZ-анализа будут отображены здесь -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="containerTable1" style="display: none;">
+        <div id="chart_div" style="width: 100%; height: 700px;"></div>
+    </div>
+
+    <div id="recommendations" style="display: none;">
+        <h2>Рекомендации по группам ABC/XYZ-анализа:</h2>
+        <p><strong class="group-AX">Группа AX:</strong> Ученики с высокими и стабильными показателями успеваемости и посещаемости, нуждающиеся в минимальном контроле. Рекомендуется продолжать текущие стратегии поддержки.</p>
+        <p><strong class="group-AY">Группа AY:</strong> Ученики с высокими показателями успеваемости, но нестабильной посещаемостью. Необходимо усилить контроль посещаемости и мотивировать к регулярному посещению занятий.</p>
+        <p><strong class="group-AZ">Группа AZ:</strong> Ученики с высокими показателями успеваемости и очень нестабильной посещаемостью. Требуется индивидуальный подход и мотивационные беседы для стабилизации посещаемости.</p>
+        <p><strong class="group-BX">Группа BX:</strong> Ученики со средней успеваемостью и стабильной посещаемостью. Рекомендуется дополнительная поддержка для повышения успеваемости через мотивационные программы и наставничество.</p>
+        <p><strong class="group-BY">Группа BY:</strong> Ученики со средней успеваемостью и нестабильной посещаемостью. Необходимо работать над мотивацией к учебе и посещаемости через вовлечение в школьные мероприятия и консультации.</p>
+        <p><strong class="group-BZ">Группа BZ:</strong> Ученики со средней успеваемостью и очень нестабильной посещаемостью. Требуется усиленный контроль и индивидуальный подход для стабилизации посещаемости и повышения успеваемости.</p>
+        <p><strong class="group-CX">Группа CX:</strong> Ученики с низкой успеваемостью, но стабильной посещаемостью. Рекомендуется систематическая поддержка, включая дополнительные занятия и наставничество для улучшения успеваемости.</p>
+        <p><strong class="group-CY">Группа CY:</strong> Ученики с низкой успеваемостью и нестабильной посещаемостью. Необходимо значительное внимание со стороны педагогов и психологов для стабилизации посещаемости и улучшения учебных результатов.</p>
+        <p><strong class="group-CZ">Группа CZ:</strong> Ученики с низкой успеваемостью и очень нестабильной посещаемостью. Требуется комплексный подход, включающий работу с родителями, индивидуальные занятия и мотивационные программы.</p>
+    </div>
+    
+</body>
+</html>
