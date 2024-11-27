@@ -2,14 +2,14 @@ from flask import Flask, request, jsonify, render_template, redirect, url_for, f
 
 from functions.models import db, User, Student, Subject, Teacher, Period, Attendance, Performance, text
 
-from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 
 import bcrypt
 import base64
 import os
-import datetime
+from datetime import datetime
 import json
+import locale
 
 import pandas as pd
 import plotly.express as px
@@ -23,6 +23,8 @@ app = Flask(__name__, static_folder='static')
 app.config['SECRET_KEY'] = '24g0274r_mbg(^61*_qm89t*ss&gs4ha1b5p1)#*0fu4iu0jb('
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://user:password@db:5432/school_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
 
 db.init_app(app)
 
@@ -3991,7 +3993,7 @@ def get_user_photo():
 
 @app.route('/analyze_photos', methods=['POST'])
 def analyze_photos():
-    # Получение teacher_id
+    # Проверка авторизации
     if 'user_id' not in session:
         return jsonify({'error': 'Пользователь не авторизован'}), 401
 
@@ -4008,7 +4010,7 @@ def analyze_photos():
 
     teacher_id = teacher.id_teacher
 
-    # Остальная обработка
+    # Получение данных из запроса
     subject = request.form.get('subject')
     class_name = request.form.get('class_name')
     dates = request.form.get('dates')
@@ -4019,7 +4021,22 @@ def analyze_photos():
 
     # Преобразуем даты обратно из JSON
     try:
-        dates = json.loads(dates)
+        # Преобразуем строку в Python объект (список строк)
+        nonFormattedDates = json.loads(dates)
+
+        # Преобразуем даты в нужный формат
+        dates = []
+
+        for date_str in nonFormattedDates:
+            # Разделяем строку по ': ', чтобы извлечь только дату
+            index, date = date_str.split(": ")
+            
+            # Преобразуем дату в формат "%Y-%m-%d"
+            date_obj = datetime.strptime(date, "%d-%m-%Y")  # Исходный формат
+            formatted_date = date_obj.strftime("%Y-%m-%d")  # Новый формат "%Y-%m-%d"
+            
+            # Формируем строку в формате "index: YYYY-MM-DD"
+            dates.append(f"{index}: {formatted_date}")
     except Exception:
         return jsonify({'error': 'Неверный формат данных для дат.'}), 400
 
@@ -4030,15 +4047,107 @@ def analyze_photos():
     # Получение известных лиц
     known_faces, student_ids = get_known_faces_and_ids()
 
+    i = 0
     for photo_path in photos:
         recognized_students = process_class_photo(photo_path, known_faces, student_ids)
 
-        # Запись посещаемости по каждой дате
-        for date_str in dates:
-            date = datetime.strptime(date_str, '%Y-%m-%d')
-            record_attendance(class_name, subject, teacher_id, date, recognized_students)
+        date_str = dates[i].split(": ")[-1]  # Извлекаем часть после ": "
+        date = datetime.strptime(date_str, '%Y-%m-%d')
+        record_attendance(class_name, subject, teacher_id, date, recognized_students)
 
-    return jsonify({'message': 'Данные успешно обработаны.'})
+        i+=1
+
+    # Генерация таблицы
+    table = generate_attendance_table(class_name, teacher_id, dates)
+
+    return jsonify(table)
+
+
+def generate_attendance_table(class_name, teacher_id, dates):
+    """
+    Формирует таблицу посещаемости для заданного класса, учителя и списка дат.
+    """
+    # Извлекаем номер класса и букву
+    class_number, class_letter = class_name.split()
+
+    # Получаем список учеников
+    students = Student.query.filter_by(class_number=class_number, class_letter=class_letter).all()
+
+    # Словарь для преобразования родительного падежа в именительный
+    MONTHS_NOMINATIVE = {
+        "января": "Январь",
+        "февраля": "Февраль",
+        "марта": "Март",
+        "апреля": "Апрель",
+        "мая": "Май",
+        "июня": "Июнь",
+        "июля": "Июль",
+        "августа": "Август",
+        "сентября": "Сентябрь",
+        "октября": "Октябрь",
+        "ноября": "Ноябрь",
+        "декабря": "Декабрь"
+    }
+
+    # Получаем даты в формате {месяц: [даты]}
+    date_months = {}
+    for date_str in dates:
+        date = datetime.strptime(date_str.split(": ")[-1], '%Y-%m-%d')
+        month_name = date.strftime('%B')  # Название месяца в родительном падеже
+        if month_name not in date_months:
+            date_months[month_name] = []
+        date_months[month_name].append(date.day)
+
+    # Формируем заголовки таблицы
+    columns = ["№", "Ученики"]
+    header_row = ["", ""]
+    
+    for month, days in date_months.items():
+        columns.append(MONTHS_NOMINATIVE.get(month, month.capitalize()))  # Преобразуем в именительный падеж  # Столбец с названием месяца
+        columns.extend([""] * (len(days) - 1))  # Пустые колонки для остальных дней
+        header_row.extend(days)  # Числа дней для заголовков
+
+
+    columns.append("Итог за период")  # Итоговый столбец
+    header_row.append("")  # Пустая колонка-разделитель
+
+    # Получаем записи посещаемости
+    attendance_records = Attendance.query.filter(
+        Attendance.id_teacher == teacher_id,
+        Attendance.date.in_([datetime.strptime(date.split(": ")[-1], '%Y-%m-%d') for date in dates])
+    ).all()
+
+    # Карта посещаемости: (id_student, date) -> present
+    attendance_map = {
+        (record.id_student, record.date): record.present for record in attendance_records
+    }
+    
+
+    # Формируем строки для каждого ученика
+    data = [header_row]
+    for i, student in enumerate(students, start=1):
+        student_row = [i, f"{student.surname} {student.first_name}"]
+        total_absent = 0
+
+        for month, days in date_months.items():
+            for day in days:
+                # Формируем дату для поиска
+                date = datetime.strptime(f"{day:02d} {month} {datetime.now().year}", "%d %B %Y").date()
+                present_status = attendance_map.get((student.id_student, date), "")
+                student_row.append(present_status)
+
+                # Считаем пропуски
+                if present_status in ("ОТ", "Б"):
+                    total_absent += 1
+
+        # Итоговая колонка с общим количеством пропусков
+        student_row.append(total_absent)
+        data.append(student_row)
+
+    return {"columns": columns, "data": data}
+
+
+
 
 def record_attendance(class_name, subject, teacher_id, date, recognized_students):
     """
@@ -4063,35 +4172,6 @@ def record_attendance(class_name, subject, teacher_id, date, recognized_students
         )
         db.session.add(attendance)
     db.session.commit()
-
-@app.route('/attendance_table', methods=['POST'])
-def attendance_table():
-    """
-    Возвращает данные для таблицы посещаемости.
-    """
-    data = request.json
-    class_number = data['class_number']
-    class_letter = data['class_letter']
-    subject_id = data['subject_id']
-
-    # Получаем данные о посещаемости
-    attendance_records = Attendance.query.filter_by(
-        class_number=class_number,
-        class_letter=class_letter,
-        id_subject=subject_id
-    ).all()
-
-    # Формируем ответ
-    table_data = {}
-    for record in attendance_records:
-        date = record.date.strftime('%Y-%m-%d')
-        if date not in table_data:
-            table_data[date] = {'absent': []}
-
-        student = Student.query.get(record.id_student)
-        table_data[date]['absent'].append(f"{student.surname} {student.first_name}")
-
-    return jsonify(table_data)
 
 
 

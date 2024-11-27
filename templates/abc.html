@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <!-- Flatpickr JS -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ru.js"></script>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/profile.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -99,7 +100,7 @@
                 <select id="classSelectPhoto" name="class_name" required>
                     <option value="" disabled selected>Выберите класс</option>
                     {% for class_number, class_letter in classes %}
-                    <option value="{{ class_number }}{{ class_letter }}">{{ class_number }} {{ class_letter }}</option>
+                    <option value="{{ class_number }} {{ class_letter }}">{{ class_number }} {{ class_letter }}</option>
                     {% endfor %}
                 </select>
             </div>

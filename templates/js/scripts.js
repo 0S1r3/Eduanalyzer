@@ -1427,10 +1427,12 @@ document.addEventListener("DOMContentLoaded", function () {
         mode: "multiple", // Позволяет выбирать несколько дат
         inline: true, // Открыт сразу
         dateFormat: "d-m-y", // Формат отображаемой даты
+        locale: "ru", // Устанавливаем язык на русский
         onChange: function (selectedDatesArray) {
             selectedDates.clear();
             selectedDatesArray.forEach((date, index) => {
-                selectedDates.set(date.toISOString().split("T")[0], index + 1);
+                const formattedDate = formatDateToLocal(date);
+                selectedDates.set(formattedDate, index + 1);
             });
             renderSelectedDates();
         }
@@ -1445,62 +1447,17 @@ document.addEventListener("DOMContentLoaded", function () {
             selectedDatesList.appendChild(span);
         });
     }
+
+    // Функция для форматирования даты в локальном формате
+    function formatDateToLocal(date) {
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+    }
 });
 
-document.getElementById('photoUploadForm').addEventListener('submit', function (e) {
-    e.preventDefault();
 
-    const selectedDates = Array.from(document.getElementById('selectedDatesList').children)
-        .map(item => item.textContent); // Список выбранных дат
-
-    const uploadedPhotos = document.getElementById('photoInput').files; // Загруженные фотографии
-
-    // Получаем предмет и класс
-    const subject = document.getElementById('subjectSelectPhoto').value; // Предмет
-    const selectedClass = document.getElementById('classSelectPhoto').value; // Класс
-
-    // Если не выбраны предмет или класс
-    if (!subject || !selectedClass) {
-        alert('Пожалуйста, выберите предмет и класс.');
-        return;
-    }
-
-    // Проверка: соответствие количества дат и фотографий
-    if (selectedDates.length !== uploadedPhotos.length) {
-        alert('Количество выбранных дат и фотографий не совпадает. Убедитесь, что загружено фото для каждой даты.');
-        return;
-    }
-
-    // Подготовка данных для отправки
-    const formData = new FormData();
-    formData.append('subject', subject);
-    formData.append('class_name', selectedClass);
-    formData.append('dates', JSON.stringify(selectedDates)); // Массив дат в формате JSON
-
-    // Добавляем файлы
-    Array.from(uploadedPhotos).forEach(photo => formData.append('photos', photo));
-
-    // Отправка данных на сервер
-    fetch('/analyze_photos', {
-        method: 'POST',
-        body: formData,
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            alert(data.error);
-        } else {
-            alert(data.message);
-            if (data.attendance) {
-                renderAttendanceTable(data.attendance);
-            }
-        }
-    })
-    .catch(err => {
-        console.error('Ошибка при отправке данных:', err);
-        alert('Произошла ошибка. Попробуйте ещё раз.');
-    });
-});
 
 
 const photoInput = document.getElementById('photoInput');
@@ -1573,15 +1530,42 @@ function renderAttendanceTable(data) {
 
 
 // Табличное заполнение с помощью фото
-/*$(document).ready(function () {
+$(document).ready(function () {
     $('#photoUploadForm').on('submit', function (e) {
         e.preventDefault();
 
-        var formData = new FormData();
-        formData.append('file', $('#fileInput')[0].files[0]);
+        const selectedDates = Array.from(document.getElementById('selectedDatesList').children)
+        .map(item => item.textContent); // Список выбранных дат
 
+        const uploadedPhotos = document.getElementById('photoInput').files; // Загруженные фотографии
+
+        // Получаем предмет и класс
+        const subject = document.getElementById('subjectSelectPhoto').value; // Предмет
+        const selectedClass = document.getElementById('classSelectPhoto').value; // Класс
+
+        // Если не выбраны предмет или класс
+        if (!subject || !selectedClass) {
+            alert('Пожалуйста, выберите предмет и класс.');
+            return;
+        }
+
+        // Проверка: соответствие количества дат и фотографий
+        if (selectedDates.length !== uploadedPhotos.length) {
+            alert('Количество выбранных дат и фотографий не совпадает. Убедитесь, что загружено фото для каждой даты.');
+            return;
+        }
+
+        // Подготовка данных для отправки
+        const formData = new FormData();
+        formData.append('subject', subject);
+        formData.append('class_name', selectedClass);
+        formData.append('dates', JSON.stringify(selectedDates)); // Массив дат в формате JSON
+
+        // Добавляем файлы
+        Array.from(uploadedPhotos).forEach(photo => formData.append('photos', photo));
+        
         $.ajax({
-            url: '/upload_photo',
+            url: '/analyze_photos',
             type: 'POST',
             data: formData,
             processData: false,
@@ -1800,8 +1784,8 @@ function renderAttendanceTable(data) {
             },
             error: function (jqXHR, textStatus, errorThrown) {
                 console.error('AJAX Error:', textStatus, errorThrown);
-                alert('Ошибка: данные не соответствуют образцу загрузки.');
+                alert('Ошибка: Произошла ошибка при распознавании фото.');
             }
         });
     });
-});*/
+});
