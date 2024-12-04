@@ -6,8 +6,10 @@
     <title>Профиль</title>
     <link rel="stylesheet" href="css/profile-main.css">
     <link rel="stylesheet" href="css/profile.css">
+    <link rel="stylesheet" href="css/profile-modal.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="js/profile.js" defer></script>
+    <script src="js/profile-modal.js" defer></script>
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
 </head>
 <body>
@@ -21,6 +23,25 @@
         </div>
         <a href="/main" class="main-button">Главная</a>
     </div>
+
+    {% if show_upload_modal %}
+    <div id="uploadPhotoModal" class="modal">
+        <div class="modal-content">
+            <div class="header_upload">
+                <h2>Загрузите фото</h2>
+            </div>
+        
+            <div id="flashMessages"></div> <!-- Контейнер для flash-сообщений -->
+    
+            <form id="photoUploadForm" enctype="multipart/form-data">
+                <label for="photoInput">Выберите фото:</label>
+                <input type="file" id="photoInput" name="photo" accept="image/*" required>
+                <button type="submit" class="upload-button">Загрузить</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+    
 
     <div class="profile-wrapper">
         <div class="profile-main-container">

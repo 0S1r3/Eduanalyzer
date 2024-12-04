@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, send_from_directory, session
 
-from functions.models import db, User, Student, Subject, Teacher, Period, Attendance, Performance, text
+from functions.models import db, User, Student, Subject, Teacher, Period, Attendance, Performance, text, flag_modified
 
 from functools import wraps
 
@@ -17,12 +17,14 @@ from functions.format import format_value  # Импорт функции из д
 from functions.analyzeABC import analyzeABC_data
 from functions.analyzeXYZ import analyzeXYZ_data
 from functions.analyzeABCXYZ import analyze_ABC_XYZ
-from functions.recognizedPhoto import get_known_faces_and_ids, process_class_photo
+from functions.recognizedPhoto import get_known_faces_and_ids, process_class_photo, check_photo_once
 
 app = Flask(__name__, static_folder='static')
 app.config['SECRET_KEY'] = '24g0274r_mbg(^61*_qm89t*ss&gs4ha1b5p1)#*0fu4iu0jb('
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://user:password@db:5432/school_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ECHO'] = True
+
 
 locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
 
@@ -3945,8 +3947,20 @@ def profile():
     
     user = User.query.filter_by(id_user=session['user_id']).first()
     
-    # Определяем, является ли пользователь учителем или учеником и передаем его ФИО
-    if user.role == 'teacher':
+    if user.role == 'student':
+        student = Student.query.filter_by(user_id=user.id_user).first()
+        
+        check = not user.photo or len(user.photo) == 0
+        return render_template(
+                'profile.html',
+                user_last_name=student.surname,
+                user_first_name=student.first_name,
+                user_middle_name=student.patronymic,
+                user_role=user.role,
+                show_upload_modal=check  # Флаг для отображения модального окна
+            )
+
+    elif user.role == 'teacher':
         teacher = Teacher.query.filter_by(user_id=user.id_user).first()
         return render_template(
             'profile.html',
@@ -3955,17 +3969,9 @@ def profile():
             user_middle_name=teacher.patronymic,
             user_role=user.role
         )
-    elif user.role == 'student':
-        student = Student.query.filter_by(user_id=user.id_user).first()
-        return render_template(
-            'profile.html',
-            user_last_name=student.surname,
-            user_first_name=student.first_name,
-            user_middle_name=student.patronymic,
-            user_role=user.role
-        )
     
-    return redirect(url_for('dashboard'))  # На случай, если роль не определена
+    return redirect(url_for('dashboard'))
+
 
 
 @app.route('/logout')
@@ -4174,7 +4180,47 @@ def record_attendance(class_name, subject, teacher_id, date, recognized_students
     db.session.commit()
 
 
+@app.route('/check_photo', methods=['POST'])
+def check_photo():
+    photo = request.files.get('photo')
+    if not photo:
+        return jsonify({'success': False, 'message': 'Файл не был загружен.'}), 400
+    
+    photo_data = photo.read()
 
+    if not check_photo_once(photo_data):  # Ваша логика проверки
+        return jsonify({'success': False, 'message': 'Лицо на фотографии не найдено. Пожалуйста, загрузите другое фото.'}), 400
+
+    return jsonify({'success': True, 'message': 'Фото успешно загружено.'}), 200
+
+
+@app.route('/upload_photo', methods=['POST'])
+def upload_photo():
+    if 'user_id' not in session:
+        return redirect(url_for('dashboard'))
+    
+    user_id = session['user_id']
+    user = User.query.filter_by(id_user=user_id).first()
+
+    if 'photo' not in request.files:
+        return jsonify({"status": "error", "message": "Файл не загружен."}), 400
+
+    photo = request.files.get('photo')
+
+    if not photo:
+        return jsonify({'success': False, 'message': 'Файл не был загружен.'}), 400
+
+    photo_data = photo.read()
+
+    if not check_photo_once(photo_data):  # Ваша логика проверки
+        return jsonify({'success': False, 'message': 'Лицо на фотографии не найдено. Пожалуйста, загрузите другое фото.'}), 400
+
+    # Сохраняем фото
+    user.photo = photo_data
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'Фото успешно загружено.'}), 200
+    
 
 #################НЕЛЬЗЯ#ИЗМЕНЯТЬ#######################################################
 

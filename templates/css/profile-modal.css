@@ -1,0 +1,128 @@
+/* Основные стили для модального окна */
+.modal {
+    display: block; /* Всегда отображается по умолчанию */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Затемненный фон */
+    overflow: hidden; /* Скрывает прокрутку */
+}
+
+/* Стили контента модального окна */
+.modal-content {
+    background-color: #ffffff;
+    margin: 10% auto;
+    padding: 20px 30px;
+    border-radius: 10px; /* Закругленные углы */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
+    width: 90%; /* Адаптивная ширина */
+    max-width: 400px; /* Максимальная ширина */
+    text-align: center;
+    animation: slideDown 0.3s ease-out; /* Анимация появления */
+}
+
+/* Стили заголовка */
+.modal-content h2 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+/* Стили для формы */
+.modal-content form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Стили для метки */
+.modal-content label {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+/* Стили для поля ввода файла */
+.modal-content input[type="file"] {
+    font-size: 14px;
+    margin-bottom: 20px;
+    padding: 5px;
+}
+
+/* Стили кнопки загрузки */
+.upload-button {
+    background-color: #313bc8; /* Синий цвет кнопки */
+    color: white;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.upload-button:hover {
+    background-color: #2a2ab8; /* Более темный синий при наведении */
+}
+
+.upload-button:active {
+    background-color: #0e1a9b; /* Темнее при нажатии */
+}
+
+/* Анимация появления окна */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Адаптивность для небольших экранов */
+@media (max-width: 600px) {
+    .modal-content {
+        padding: 15px;
+        font-size: 14px;
+    }
+
+    .upload-button {
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+}
+
+
+#flashMessages {
+    margin: 10px 0;
+}
+
+.flash {
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 10px;
+    animation: fadeOut 5s ease-out forwards;
+}
+
+.flash.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.flash.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+@keyframes fadeOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}

@@ -96,3 +96,17 @@ def process_class_photo(photo_file, known_face_encodings, student_ids):
 
     return recognized_students
 
+# Опциональные функции
+
+def check_photo_once(photo_bytes):
+    '''Проверка наличия лица на фото'''
+    img_array = convert_image_to_rgb(photo_bytes)
+
+    if img_array is None:
+        return False
+    
+    face_encodings = face_recognition.face_encodings(img_array)
+    if not face_encodings:
+        return False
+    
+    return True

@@ -395,28 +395,15 @@ input:checked + .slider:before {
     border-radius: 5px;
     color: #721c24;
     font-size: 14px;  /* Уменьшаем размер шрифта */
-    max-height: 40px;  /* Устанавливаем максимальную высоту 25px */
+    max-height: 50px;  /* Устанавливаем максимальную высоту 50px */
     overflow: hidden;
     opacity: 1;
     animation: fadeOut 5s ease-out forwards;
 }
 
 @keyframes fadeOut {
-    0% {
-        opacity: 1;
-        max-height: 40px;  /* Начальная высота */
-        padding: 5px 10px;  /* Начальный padding */
-    }
-    80% {
-        opacity: 1;
-        max-height: 40px;
-        padding: 5px 10px;
-    }
-    100% {
-        opacity: 0;
-        max-height: 0;
-        padding: 0;  /* Убираем padding */
-    }
+    0% { opacity: 1; }
+    100% { opacity: 0; }
 }
 
 /* Для загрузки фото */

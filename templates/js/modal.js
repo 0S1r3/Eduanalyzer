@@ -135,33 +135,130 @@ function validateInput(event) {
     input.reportValidity();
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+    function ensureFlashContainer() {
+        const modal = document.getElementById('authModal');
+        if (!modal) {
+            console.error("Модальное окно не найдено.");
+            return null;
+        }
+    
+        let flashContainer = modal.querySelector('.flash-messages');
+        if (!flashContainer) {
+            flashContainer = document.createElement('div');
+            flashContainer.className = 'flash-messages';
+            modal.querySelector('.modal-header').insertAdjacentElement('afterend', flashContainer); // Добавляем в начало модального окна
+        }
+        return flashContainer;
+    }
+    
+    function displayFlashMessage(message) {
+        const flashContainer = ensureFlashContainer();
+        if (flashContainer) {
+            flashContainer.innerHTML = `<p>${message}</p>`;
 
-// Для учеников
-document.getElementById('photoInputStudent').addEventListener('change', function (event) {
-    const photoPreview = document.getElementById('photoPreviewStudent');
-    const file = event.target.files[0];
+            // Через 5 секунд удаляем контейнер
+            setTimeout(() => {
+                flashContainer.remove();  // Полностью удаляем контейнер из DOM
+            }, 5000);  // 5000 миллисекунд = 5 секунд
+        }
+    }
+    
 
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            photoPreview.src = e.target.result;
-            photoPreview.classList.remove('hide'); // Показать изображение
-        };
-        reader.readAsDataURL(file);
+    // Обработчик загрузки фотографий
+    function handlePhotoUpload(event, previewId, role) {
+        const file = event.target.files[0];
+        const photoPreview = document.getElementById(previewId);
+
+        if (!file) {
+            displayFlashMessage('Пожалуйста, выберите файл.');
+            return;
+        }
+
+        if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
+            displayFlashMessage('Недопустимый формат файла. Допустимы только JPG и PNG.');
+            event.target.value = '';
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            displayFlashMessage('Файл слишком большой. Максимальный размер: 5 МБ.');
+            event.target.value = '';
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('photo', file);
+
+        fetch('/check_photo', {
+            method: 'POST',
+            body: formData,
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    displayFlashMessage(data.message); // Выводим сообщение только при ошибке
+                    event.target.value = ''; // Очистить поле файла при ошибке
+                    photoPreview.classList.add('hide'); // Скрыть изображение
+                } else {
+                    const reader = new FileReader();
+                    reader.onload = function (readerEvent) {
+                        photoPreview.src = readerEvent.target.result; // Используем readerEvent
+                        photoPreview.classList.remove('hide'); // Показать изображение
+                    };
+                    reader.readAsDataURL(file);
+                }
+            })
+            .catch(() => {
+                displayFlashMessage('Ошибка при загрузке изображения. Попробуйте снова.');
+            });
+    }
+
+    // Привязка обработчиков к элементам
+    const studentPhotoInput = document.getElementById('photoInputStudent');
+    if (studentPhotoInput) {
+        studentPhotoInput.addEventListener('change', (event) => handlePhotoUpload(event, 'photoPreviewStudent', 'student'));
+    }
+
+    const teacherPhotoInput = document.getElementById('photoInputTeacher');
+    if (teacherPhotoInput) {
+        teacherPhotoInput.addEventListener('change', (event) => handlePhotoUpload(event, 'photoPreviewTeacher', 'teacher'));
     }
 });
 
-// Для учителей
-document.getElementById('photoInputTeacher').addEventListener('change', function (event) {
-    const photoPreview = document.getElementById('photoPreviewTeacher');
-    const file = event.target.files[0];
 
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            photoPreview.src = e.target.result;
-            photoPreview.classList.remove('hide'); // Показать изображение
-        };
-        reader.readAsDataURL(file);
-    }
-});
+
+
+
+
+
+
+// // Для учеников
+// document.getElementById('photoInputStudent').addEventListener('change', function (event) {
+//     const photoPreview = document.getElementById('photoPreviewStudent');
+//     const file = event.target.files[0];
+
+//     if (file) {
+//         const reader = new FileReader();
+//         reader.onload = function (e) {
+//             photoPreview.src = e.target.result;
+//             photoPreview.classList.remove('hide'); // Показать изображение
+//         };
+//         reader.readAsDataURL(file);
+//     }
+// });
+
+// // Для учителей
+// document.getElementById('photoInputTeacher').addEventListener('change', function (event) {
+//     const photoPreview = document.getElementById('photoPreviewTeacher');
+//     const file = event.target.files[0];
+
+//     if (file) {
+//         const reader = new FileReader();
+//         reader.onload = function (e) {
+//             photoPreview.src = e.target.result;
+//             photoPreview.classList.remove('hide'); // Показать изображение
+//         };
+//         reader.readAsDataURL(file);
+//     }
+// });
