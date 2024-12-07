@@ -11,6 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libopenblas-dev \
     liblapack-dev \
     libx11-dev \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
     locales \
     && echo "ru_RU.UTF-8 UTF-8" >> /etc/locale.gen \
     && locale-gen \

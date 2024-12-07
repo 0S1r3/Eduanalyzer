@@ -4,10 +4,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <!-- Socket.io JS-->
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.min.js"></script>
+    <!-- Sortable JS-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ru.js"></script>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/profile.css">
     <script src="js/scripts.js" defer></script>
@@ -32,66 +43,149 @@
         <a href="/main">Главная</a>
     </div>
 
-    <div class="container">
-        <h1>Загрузка данных учеников</h1>
-        <div class="analysis-options">
-            <select id="classSelect">
-                <option value="">Выберите класс</option>
-                <!-- Динамически заполняемые классы -->
-            </select>
-            <select id="classLetterSelect">
-                <option value="">Выберите букву класса</option>
-                <!-- Динамически заполняемые буквы классов -->
-            </select>
-            <select id="subjectSelect">
-                <option value="">Выберите предмет</option>
-                <!-- Динамически заполняемые предметы -->
-            </select>
-            <select id="teacherSelect">
-                <option value="">Выберите преподавателя</option>
-                <!-- Динамически заполняемые преподаватели -->
-            </select>
-            <select id="performanceSelect">
-                <option value="grades">Успеваемость</option>
-                <option value="attendance">Посещаемость</option>
-            </select>
-            <select id="periodSelect">
-                <option value="">Выберите период</option>
-                <!-- Динамически заполняемые периоды -->
-            </select>
-            <select id="periodSelectYear">
-                <option value="">Выберите год обучения</option>
-                <!-- Динамически заполняемые года обучения -->
-            </select>
+    <h1 style="text-align: center; font-family: Arial, sans-serif;">Загрузка данных учеников</h1>
+
+    <div class="tabs">
+        <div class="tab active" onclick="openTab(event, 'uploadStudents')">Загрузка учеников</div>
+        <div class="tab" onclick="openTab(event, 'uploadExcel')">Загрузка Excel</div>
+        <div class="tab" onclick="openTab(event, 'uploadPhotos')">Загрузка фото</div>
+    </div>
+
+    <!-- Содержимое вкладок -->
+    <div id="uploadStudents" class="tab-content active">
+        <!-- Загрузка данных из Базы данных -->
+        <div class="container">
+            <h2>Загрузка данных учеников</h2>
+            <div class="analysis-options">
+                <select id="classSelect">
+                    <option value="">Выберите класс</option>
+                    <!-- Динамически заполняемые классы -->
+                </select>
+                <select id="classLetterSelect">
+                    <option value="">Выберите букву класса</option>
+                    <!-- Динамически заполняемые буквы классов -->
+                </select>
+                <select id="subjectSelect">
+                    <option value="">Выберите предмет</option>
+                    <!-- Динамически заполняемые предметы -->
+                </select>
+                <select id="teacherSelect">
+                    <option value="">Выберите преподавателя</option>
+                    <!-- Динамически заполняемые преподаватели -->
+                </select>
+                <select id="performanceSelect">
+                    <option value="grades">Успеваемость</option>
+                    <option value="attendance">Посещаемость</option>
+                </select>
+                <select id="periodSelect">
+                    <option value="">Выберите период</option>
+                    <!-- Динамически заполняемые периоды -->
+                </select>
+                <select id="periodSelectYear">
+                    <option value="">Выберите год обучения</option>
+                    <!-- Динамически заполняемые года обучения -->
+                </select>
+            </div>
+            <button onclick="loadData()">Загрузить данные</button>
+        </div>    
+    </div>
+
+    <div id="uploadExcel" class="tab-content">
+        <!-- Загрузка данных из Excel -->
+        <div class="containerForUpload">
+            <h2>Загрузка Excel</h2>
+            <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+                <div class="upload-area" id="uploadArea">
+                    <img src="/static/upload.png" alt="Upload Icon" width="50">
+                    <p>Перетащите файлы сюда</p>
+                    <label for="fileInput" style="cursor: pointer; color: #007bff;">Выберите файл</label>
+                    <input type="file" id="fileInput" style="display: none;">
+                </div>
+                <button class="start-button">Загрузить файл Excel</button>
+            </form>
         </div>
-        <button onclick="loadData()">Загрузить данные</button>
     </div>
 
-    <div class="containerForUpload">
-        <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
-            <div class="upload-area" id="uploadArea">
-                <img src="/static/upload.png" alt="Upload Icon" width="50">
-                <p>Перетащите файлы сюда</p>
-                <label for="fileInput" style="cursor: pointer; color: #007bff;">Выберите файл</label>
-                <input type="file" id="fileInput" style="display: none;">
-            </div>
-            <button class="start-button">Загрузить файл Excel</button>
-        </form>
-    </div>
+    <div id="uploadPhotos" class="tab-content">
+        <!-- Загрузка данных по фото аудитории (класса) -->
+        <div class="containerForUploadPhotos">
+            <h2>Загрузка фотографий</h2>
+            
+            <form id="photoUploadForm" action="/upload_photos" method="post" enctype="multipart/form-data">
+                <!-- Выбор предмета -->
+                <div class="form-group styled-select">
+                    <label for="subjectSelectPhoto">Выберите предмет:</label>
+                    <select id="subjectSelectPhoto" name="subject" required>
+                        <option value="" disabled selected>Выберите предмет</option>
+                        {% for subject in subjects %}
+                        <option value="{{ subject.id_subject }}">{{ subject.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+        
+                <!-- Выбор класса -->
+                <div class="form-group styled-select">
+                    <label for="classSelectPhoto">Выберите класс:</label>
+                    <select id="classSelectPhoto" name="class_name" required>
+                        <option value="" disabled selected>Выберите класс</option>
+                        {% for class_number, class_letter in classes %}
+                        <option value="{{ class_number }} {{ class_letter }}">{{ class_number }} {{ class_letter }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+        
+                <!-- Календарь выбора нескольких дат -->
+                <div class="calendar-wrapper">
+                    <label for="calendarInput">Выберите даты:</label>
+                    <div id="calendarInput"></div>
+                    <div id="selectedDatesList" class="selected-dates-list"></div>
+                </div>
+                
+        
+                <!-- Область для загрузки фотографий -->
+                <div id="photoUploadArea">
+                    <img src="/static/upload_photo.png" alt="Upload Icon" width="50">
+                    <p>Перетащите фото сюда</p>
+                    <label for="photoInput" class="photo-input-label" style="cursor: pointer; color: #007bff;">Выберите фото</label>
+                    <input type="file" id="photoInput" name="photos" multiple style="display: none;">
+                </div>
+        
+                <!-- Контейнер для превью фотографий -->
+                <div id="photoPreviewContainer" class="photo-preview-container">
+                    <!-- Миниатюры загруженных фото будут добавлены сюда -->
+                </div>
 
-    <div class="containerForUploadPhotos">
-        <form id="photoUploadForm" action="/upload_photos" method="post" enctype="multipart/form-data">
-            <div class="photo-upload-area" id="photoUploadArea">
-                <img src="/static/upload_photo.png" alt="Upload Icon" width="50">
-                <p>Перетащите фото сюда</p>
-                <label for="photoInput" class="photo-input-label" style="cursor: pointer; color: #007bff;">Выберите фото</label>
-                <input type="file" id="photoInput" name="photos" multiple style="display: none;">
-            </div>
-            <div id="photoPreviewContainer" class="photo-preview-container">
-                <!-- Миниатюры загруженных фото будут добавлены сюда -->
-            </div>
-            <button class="upload-button" type="submit">Загрузить фото</button>
-        </form>
+                <!-- Кнопка "Удалить все фото" -->
+                <button id="deleteAllButton" class="delete-all-button hide" type="button">Удалить все фото</button>
+        
+                <!-- Кнопка загрузки -->
+                <button class="upload-button" type="submit">Загрузить фото</button>
+
+                <!-- Отображение распознавания в реальном времени -->
+                <div id="realTimeDisplay" class="real-time-display">
+                    <h3>Процесс обработки</h3>
+                    <div class="progress-bar">
+                        <div id="progressText" class="progress-text">Обработано фото 0 из 0</div>
+                        <div id="progressBarFill" class="progress-bar-fill"></div>
+                    </div>
+                    <!-- Метка текущей фотографии -->
+                    <div id="photoCounter" class="photo-counter">Фото 0 из 0</div>
+                    <div id="photoCarousel" class="photo-carousel">
+                        <button class="carousel-button prev" id="prevPhoto" type="button">&lt;</button>
+                        <img id="currentPhoto" src="/static/placeholder.jpeg" alt="Превью фото" class="carousel-image">
+                        <button class="carousel-button next" id="nextPhoto" type="button">&gt;</button>
+                    </div>
+                    <!-- Кнопка сворачивания текстовой информации -->
+                    <button id="toggleInfo" class="toggle-info-button" type="button">Показать информацию</button>
+                    <div id="processedPhotos" class="processed-photos" style="display: none;">
+                        <!-- Информация о распознанных студентах -->
+                    </div>
+                </div>
+
+
+                
+            </form>
+        </div>
     </div>
 
     <div class="containerTable" style="display: none;">
@@ -123,7 +217,7 @@
         <div class="slider-container">
             <label for="startQuarter">Начальный период:</label>
             <select id="startQuarter">
-                <optgroup label="Четверти">
+                <!-- <optgroup label="Четверти">
                     <option value="Q1">1 четверть</option>
                     <option value="Q2">2 четверть</option>
                     <option value="Q3">3 четверть</option>
@@ -135,7 +229,7 @@
                 </optgroup>
                 <optgroup label="Итог">
                     <option value="I">Итог за период</option>
-                </optgroup>
+                </optgroup> -->
             </select>
         </div>
         
@@ -143,7 +237,7 @@
         <div class="slider-container">
             <label for="endQuarter">Конечный период:</label>
             <select id="endQuarter">
-                <optgroup label="Четверти">
+                <!--<optgroup label="Четверти">
                     <option value="Q1">1 четверть</option>
                     <option value="Q2">2 четверть</option>
                     <option value="Q3">3 четверть</option>
@@ -155,7 +249,7 @@
                 </optgroup>
                 <optgroup label="Итог">
                     <option value="I">Итог за период</option>
-                </optgroup>
+                </optgroup>-->
             </select>
         </div>
 

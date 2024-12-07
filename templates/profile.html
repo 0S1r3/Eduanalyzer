@@ -41,11 +41,29 @@
         </div>
     </div>
     {% endif %}
+
+    <div id="changePhotoModal" class="newModal">
+        <div class="new-modal-content">
+            <button id="closeChangePhotoModal" class="close-button">&times;</button>
+            <div class="header_upload">
+                <h2>Изменение фото профиля</h2>
+            </div>
+
+            <div id="newFlashMessages"></div> <!-- Контейнер для flash-сообщений -->
+
+            <form id="changePhotoForm" enctype="multipart/form-data">
+                <label for="newPhotoInput">Выберите новое фото:</label>
+                <input type="file" id="newPhotoInput" name="photo" accept="image/*" required>
+                <button type="submit" class="upload-button">Сохранить</button>
+            </form>
+        </div>
+    </div>
+    
     
 
     <div class="profile-wrapper">
         <div class="profile-main-container">
-            <img id="userPhotoMain" src="/static/profile.png" alt="Профиль" />
+            <img id="userPhotoMain" src="/static/profile.png" alt="Профиль" title="Нажмите, чтобы изменить фото" />
             <h2>{{ user_last_name }} {{ user_first_name }}{% if user_middle_name %} {{ user_middle_name }}{% endif %}</h2>
         </div>
 

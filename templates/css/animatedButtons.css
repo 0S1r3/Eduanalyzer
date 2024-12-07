@@ -389,21 +389,65 @@ input:checked + .slider:before {
 
 
 .flash-messages {
-    background-color: #f8d7da;
-    padding: 5px 10px;  /* Уменьшаем паддинги */
+    padding: 5px 10px;
+    background-color: #d4edda;
+    color: #155724;
     margin: 20px;
     border-radius: 5px;
-    color: #721c24;
-    font-size: 14px;  /* Уменьшаем размер шрифта */
-    max-height: 50px;  /* Устанавливаем максимальную высоту 50px */
+    font-size: 14px;
+    max-height: 50px;
     overflow: hidden;
     opacity: 1;
-    animation: fadeOut 5s ease-out forwards;
+    animation: fadeOut 10s ease-out forwards;
+}
+
+.flash-messages-stat {
+    padding: 5px 10px;
+    background-color: #f8d7da;
+    color: #721c24;
+    margin: 20px;
+    border-radius: 5px;
+    font-size: 14px;
+    max-height: 100px; /* Устанавливаем максимальную высоту */
+    overflow: hidden;
+    opacity: 1;
+    animation: fadeOutStat 10s ease-out forwards;
+}
+
+/* Успешное сообщение */
+.flash-messages.flash-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+/* Ошибочное сообщение */
+.flash-messages.flash-error {
+    background-color: #f8d7da;
+    color: #721c24;
 }
 
 @keyframes fadeOut {
     0% { opacity: 1; }
     100% { opacity: 0; }
+}
+
+@keyframes fadeOutStat {
+    0% {
+        opacity: 1;
+        max-height: 100px; /* Начальная высота блока */
+        margin: 20px; /* Сохраняем отступ */
+        padding: 5px 10px; /* Начальные отступы */
+    }
+    90% {
+        opacity: 0; /* Исчезает визуально */
+        max-height: 100px; /* Высота ещё сохраняется до конца */
+    }
+    100% {
+        opacity: 0;
+        max-height: 0; /* Уменьшаем высоту до 0 */
+        margin: 0; /* Убираем отступы */
+        padding: 0; /* Убираем внутренние отступы */
+    }
 }
 
 /* Для загрузки фото */

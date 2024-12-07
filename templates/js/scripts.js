@@ -69,8 +69,132 @@ function loadData() {
         success: function (response) {
             updateTable(response);
             updateAnalysisType(response);
-            updateAnalysisMeasure(response);
-            updatePeriodOptions(response);
+            //updateAnalysisMeasure(response);
+            //updatePeriodOptions(response);
+
+            // Очистка текущих опций в метрике
+            var analysisMeasure = $('#analysisMeasure');
+            analysisMeasure.empty(); // Очистка всех опций
+
+            // Функция для добавления опции в селект
+            function addOption(value, text) {
+                analysisMeasure.append(`<option value="${value}">${text}</option>`);
+            }
+
+            // Условия для добавления опций на основе загруженных данных
+            var containsAttendanceDays = response.columns.includes('Дни посещаемости'); // Пример условия для посещаемости
+            var containsPeriodTotal = response.columns.includes('Итог за период');
+            var contains1 = response.data[0].includes('1 четверть');
+            var contains2 = response.data[0].includes('2 четверть');
+            var contains3 = response.data[0].includes('3 четверть');
+            var contains4 = response.data[0].includes('4 четверть');
+            var containsAverageGrade = response.columns.includes('Средний балл');
+            var containsAllGrade = response.columns.includes('Год');
+            var containsMedium1 = response.columns.includes('1 полугодие');
+            var containsMedium2 = response.columns.includes('2 полугодие');
+            var containsYearTotal = response.columns.includes('Итог.');
+            var containsPeriodGrade = response.columns.includes('Оценка за период');
+
+            // Проверка условий и добавление соответствующих опций
+            if (containsAttendanceDays) {
+                addOption('attendanceDays', 'Посещаемость');
+            }
+
+            if (containsPeriodTotal) {
+                addOption('periodTotal', 'Итог за период');
+            }
+
+            if (contains1) {
+                addOption('quarter1', '1 четверть');
+            }
+            if (contains2) {
+                addOption('quarter2', '2 четверть');
+            }
+            if (contains3) {
+                addOption('quarter3', '3 четверть');
+            }
+            if (contains4) {
+                addOption('quarter4', '4 четверть');
+            }
+
+            if (containsAverageGrade) {
+                addOption('averageGrade', 'Средний балл');
+            }
+
+            if (containsAllGrade) {
+                addOption('year', 'Год');
+            }
+
+            if (containsMedium1) {
+                addOption('medium1', '1 полугодие');
+            }
+            if (containsMedium2) {
+                addOption('medium2', '2 полугодие');
+            }
+
+            if (containsYearTotal) {
+                addOption('yearTotal', 'Итог.');
+            }
+
+            if (containsPeriodGrade) {
+                addOption('gradePeriod', 'Оценка за период');
+            }
+
+            // Применить первую доступную опцию
+            analysisMeasure.find('option:first').prop('selected', true);
+            
+
+
+            // Для XYZ-анализа
+            // Функция для очистки всех опций в селекторе
+            function clearOptions(selector) {
+                var select = $(selector);
+                select.empty();  // Очистка всех текущих опций
+            }
+
+            // Условия для начального и конечного периода
+            var quarterConditions = [contains1, contains2, contains3, contains4];
+            var quarterOptions = ['Q1', 'Q2', 'Q3', 'Q4'];
+            var mediumConditions = [containsMedium1, containsMedium2];
+            var mediumOptions = ['H1', 'H2'];
+            var finalOption = 'I';
+
+            // Функция для добавления опций в селектор
+            function addPeriodOptions(selector, quarterConditions, quarterOptions, mediumConditions, mediumOptions, containsPeriodTotal, finalOption) {
+                var select = $(selector);
+                
+                // Очистка существующих опций
+                clearOptions(selector);
+                
+                // Добавляем опции для четвертей
+                quarterConditions.forEach((condition, index) => {
+                    if (condition) {
+                        select.append(`<option value="${quarterOptions[index]}">${index + 1} четверть</option>`);
+                    }
+                });
+
+                // Добавляем опции для полугодий
+                mediumConditions.forEach((condition, index) => {
+                    if (condition) {
+                        select.append(`<option value="${mediumOptions[index]}">${index + 1} полугодие</option>`);
+                    }
+                });
+
+                // Добавляем итоговый период (если есть)
+                if (containsPeriodTotal) {
+                    select.append(`<option value="${finalOption}">Итог за период</option>`);
+                }
+
+                // Применить первую доступную опцию
+                select.find('option:first').prop('selected', true);
+            }
+
+            // Управление опциями для начального периода
+            addPeriodOptions('#startQuarter', quarterConditions, quarterOptions, mediumConditions, mediumOptions,containsPeriodTotal, finalOption);
+
+            // Управление опциями для конечного периода
+            addPeriodOptions('#endQuarter', quarterConditions, quarterOptions, mediumConditions, mediumOptions,containsPeriodTotal, finalOption);
+
             $('.containerTable').css('display', 'table');
         },
         error: function (xhr, status, error) {
@@ -306,14 +430,14 @@ $(document).ready(function () {
                 response.data.slice(1).forEach(function (row) {
                     var newRow = '<tr>';
                     row.forEach(function (cell) {
-                        var cellValue = cell || "";
+                        var cellValue = cell !== null && cell !== undefined ? cell : "";
                         newRow += `<td>${cellValue}</td>`;
-                        rowData.push(cellValue)
+                        rowData.push(cellValue);
                     });
                     newRow += '</tr>';
                     $('#studentTable tbody').append(newRow);
                 });
-
+                
                 // Определение типа анализа на основе загруженных данных
                 var containsAverageGrade = response.columns.includes('Средняя оценка');
                 var containsAttendanceDays = response.columns.includes('Дни посещения');
@@ -347,109 +471,128 @@ $(document).ready(function () {
                     alert('Ошибка: данные не соответствуют образцу загрузки.');
                 }
 
-                // Определение меры анализа на основе загруженных данных
-                var containsAllGrade = response.columns.includes('Год');
+                // Очистка текущих опций в метрике
+                var analysisMeasure = $('#analysisMeasure');
+                analysisMeasure.empty(); // Очистка всех опций
+
+                // Функция для добавления опции в селект
+                function addOption(value, text) {
+                    analysisMeasure.append(`<option value="${value}">${text}</option>`);
+                }
+
+                // Условия для добавления опций на основе загруженных данных
+                var containsAttendanceDays = response.columns.includes('Дни посещаемости'); // Пример условия для посещаемости
+                var containsPeriodTotal = response.columns.includes('Итог за период');
                 var contains1 = response.data[0].includes('1 четверть');
                 var contains2 = response.data[0].includes('2 четверть');
                 var contains3 = response.data[0].includes('3 четверть');
                 var contains4 = response.data[0].includes('4 четверть');
+                var containsAverageGrade = response.columns.includes('Средний балл');
+                var containsAllGrade = response.columns.includes('Год');
                 var containsMedium1 = response.columns.includes('1 полугодие');
                 var containsMedium2 = response.columns.includes('2 полугодие');
                 var containsYearTotal = response.columns.includes('Итог.');
-                var containsPeriodTotal = response.columns.includes('Итог за период');
                 var containsPeriodGrade = response.columns.includes('Оценка за период');
 
-                var analysisMeasure = $('#analysisMeasure');
-                // Показ опций, которые остались отключенными
-                analysisMeasure.find('option:disabled').show();
-
-                analysisMeasure.find('option').prop('disabled', true);
-                // Включаем опции для анализа посещаемости, если они присутствуют в данных
+                // Проверка условий и добавление соответствующих опций
                 if (containsAttendanceDays) {
-                    analysisMeasure.find('option[value="attendanceDays"]').prop('disabled', false);
+                    addOption('attendanceDays', 'Посещаемость');
                 }
+
                 if (containsPeriodTotal) {
-                    analysisMeasure.find('option[value="periodTotal"]').prop('disabled', false);
+                    addOption('periodTotal', 'Итог за период');
                 }
+
                 if (contains1) {
-                    analysisMeasure.find('option[value="quarter1"]').prop('disabled', false);
+                    addOption('quarter1', '1 четверть');
                 }
                 if (contains2) {
-                    analysisMeasure.find('option[value="quarter2"]').prop('disabled', false);
+                    addOption('quarter2', '2 четверть');
                 }
                 if (contains3) {
-                    analysisMeasure.find('option[value="quarter3"]').prop('disabled', false);
+                    addOption('quarter3', '3 четверть');
                 }
                 if (contains4) {
-                    analysisMeasure.find('option[value="quarter4"]').prop('disabled', false);
+                    addOption('quarter4', '4 четверть');
                 }
-                // Включаем опции для анализа успеваемости, если они присутствуют в данных
+
                 if (containsAverageGrade) {
-                    analysisMeasure.find('option[value="averageGrade"]').prop('disabled', false);
+                    addOption('averageGrade', 'Средний балл');
                 }
+
                 if (containsAllGrade) {
-                    analysisMeasure.find('option[value="year"]').prop('disabled', false);
+                    addOption('year', 'Год');
                 }
+
                 if (containsMedium1) {
-                    analysisMeasure.find('option[value="medium1"]').prop('disabled', false);
+                    addOption('medium1', '1 полугодие');
                 }
                 if (containsMedium2) {
-                    analysisMeasure.find('option[value="medium2"]').prop('disabled', false);
+                    addOption('medium2', '2 полугодие');
                 }
+
                 if (containsYearTotal) {
-                    analysisMeasure.find('option[value="yearTotal"]').prop('disabled', false);
+                    addOption('yearTotal', 'Итог');
                 }
+
                 if (containsPeriodGrade) {
-                    analysisMeasure.find('option[value="gradePeriod"]').prop('disabled', false);
+                    addOption('gradePeriod', 'Оценка за период');
                 }
 
-                // Скрытие опций, которые остались отключенными
-                analysisMeasure.find('option:disabled').hide();
+                // Применить первую доступную опцию
+                analysisMeasure.find('option:first').prop('selected', true);
                 
-                // Выбор первой доступной опции
-                analysisMeasure.find('option:not(:disabled)').first().prop('selected', true);
 
-                // Проверка данных для включения соответствующих опций
-                var contains1 = response.data[0].includes('1 четверть');
-                var contains2 = response.data[0].includes('2 четверть');
-                var contains3 = response.data[0].includes('3 четверть');
-                var contains4 = response.data[0].includes('4 четверть');
-                var containsMedium1 = response.data[0].includes('1 полугодие');
-                var containsMedium2 = response.data[0].includes('2 полугодие');
-                var containsFinal = response.columns.includes('Итог за период');
 
-                // Функция для управления опциями в выпадающем списке
-                function manageOptions(selector, conditions, options) {
+                // Для XYZ-анализа
+                // Функция для очистки всех опций в селекторе
+                function clearOptions(selector) {
                     var select = $(selector);
-                    select.find('option').prop('disabled', true);
-                    
-                    for (var i = 0; i < conditions.length; i++) {
-                        if (conditions[i]) {
-                            select.find(`option[value="${options[i]}"]`).prop('disabled', false);
-                        }
-                    }
-                    
-                    // Скрытие опций, которые остались отключенными
-                    select.find('option:disabled').hide();
-                    
-                    // Выбор первой доступной опции
-                    select.find('option:not(:disabled)').first().prop('selected', true);
+                    select.empty();  // Очистка всех текущих опций
                 }
 
                 // Условия для начального и конечного периода
                 var quarterConditions = [contains1, contains2, contains3, contains4];
                 var quarterOptions = ['Q1', 'Q2', 'Q3', 'Q4'];
-                
                 var mediumConditions = [containsMedium1, containsMedium2];
                 var mediumOptions = ['H1', 'H2'];
-
                 var finalOption = 'I';
 
+                // Функция для добавления опций в селектор
+                function addPeriodOptions(selector, quarterConditions, quarterOptions, mediumConditions, mediumOptions, containsPeriodTotal, finalOption) {
+                    var select = $(selector);
+                    
+                    // Очистка существующих опций
+                    clearOptions(selector);
+                    
+                    // Добавляем опции для четвертей
+                    quarterConditions.forEach((condition, index) => {
+                        if (condition) {
+                            select.append(`<option value="${quarterOptions[index]}">${index + 1} четверть</option>`);
+                        }
+                    });
+
+                    // Добавляем опции для полугодий
+                    mediumConditions.forEach((condition, index) => {
+                        if (condition) {
+                            select.append(`<option value="${mediumOptions[index]}">${index + 1} полугодие</option>`);
+                        }
+                    });
+
+                    // Добавляем итоговый период (если есть)
+                    if (containsPeriodTotal) {
+                        select.append(`<option value="${finalOption}">Итог за период</option>`);
+                    }
+
+                    // Применить первую доступную опцию
+                    select.find('option:first').prop('selected', true);
+                }
+
                 // Управление опциями для начального периода
-                manageOptions('#startQuarter', quarterConditions.concat(mediumConditions).concat(containsFinal), quarterOptions.concat(mediumOptions).concat(finalOption));
+                addPeriodOptions('#startQuarter', quarterConditions, quarterOptions, mediumConditions, mediumOptions,containsPeriodTotal, finalOption);
 
                 // Управление опциями для конечного периода
-                manageOptions('#endQuarter', quarterConditions.concat(mediumConditions).concat(containsFinal), quarterOptions.concat(mediumOptions).concat(finalOption));
+                addPeriodOptions('#endQuarter', quarterConditions, quarterOptions, mediumConditions, mediumOptions,containsPeriodTotal, finalOption);
 
                 $('.containerTable').css('display', 'table');
             
@@ -475,21 +618,27 @@ document.addEventListener('DOMContentLoaded', function () {
         settingsMenu.classList.toggle('open'); // Переключаем класс 'open'
     });
 
-    // Обновляем значения ползунков при изменении вручную
-    thresholdA.addEventListener('change', function () {
-        if (parseFloat(thresholdA.value) < 0) thresholdA.value = 0;
-        if (parseFloat(thresholdA.value) > 1) thresholdA.value = 1;
-    });
+    if(thresholdA){
+        // Обновляем значения ползунков при изменении вручную
+        thresholdA.addEventListener('change', function () {
+            if (parseFloat(thresholdA.value) < 0) thresholdA.value = 0;
+            if (parseFloat(thresholdA.value) > 1) thresholdA.value = 1;
+        });
+    }
 
-    thresholdB.addEventListener('change', function () {
-        if (parseFloat(thresholdB.value) < 0) thresholdB.value = 0;
-        if (parseFloat(thresholdB.value) > 1) thresholdB.value = 1;
-    });
-
-    thresholdC.addEventListener('change', function () {
-        if (parseFloat(thresholdC.value) < 0) thresholdC.value = 0;
-        if (parseFloat(thresholdC.value) > 1) thresholdC.value = 1;
-    });
+    if (thresholdB){
+        thresholdB.addEventListener('change', function () {
+            if (parseFloat(thresholdB.value) < 0) thresholdB.value = 0;
+            if (parseFloat(thresholdB.value) > 1) thresholdB.value = 1;
+        });
+    }
+    
+    if (thresholdC){
+        thresholdC.addEventListener('change', function () {
+            if (parseFloat(thresholdC.value) < 0) thresholdC.value = 0;
+            if (parseFloat(thresholdC.value) > 1) thresholdC.value = 1;
+        });
+    }
 });
 
 
@@ -991,45 +1140,143 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // ABC-анализ
 function analyzeABCData() {
-    var tableData = [];
-    var columns = [];
-
-    // Обработка первой строки заголовка (первый tr)
-    $('#studentTable thead tr:nth-child(1) th').each(function () {
-        var colspan = $(this).attr('colspan');
-        if (colspan) {
-            // Обработка второй строки заголовка (второй tr)
-            var secondRowHeaders = document.querySelectorAll('#studentTable thead tr:nth-child(2) th');
-            for (var i = 0; i < colspan; i++) {
-                columns.push(secondRowHeaders[i].textContent);
-            }
-        } else {
-            // Если colspan не указан, добавляем просто название столбца
-            columns.push($(this).text());
-        }
-    });
-
-    // Обработка данных в теле таблицы
-    $('#studentTable tbody tr').each(function () {
-        var rowData = [];
-        $(this).find('td').each(function () {
-            if ($(this).text().trim() == '') {
-                rowData.push('0');
-            }
-            else{
-                rowData.push($(this).text());
+    function checkLearningPeriods(selector) {
+        var theadRows = $(selector).closest('thead').find('tr');
+        var hasLearningPeriods = false;
+    
+        theadRows.each(function () {
+            if ($(this).text().includes("Учебные периоды")) {
+                hasLearningPeriods = true;
             }
         });
-        tableData.push(rowData);
-    });
+    
+        return hasLearningPeriods;
+    }
+
+    
+    function checkTheadRowCount(selector, expectedCount = 2) {
+        var theadRows = $(selector).closest('thead').find('tr');
+        return theadRows.length === expectedCount;
+    }
+
+    if (!checkLearningPeriods("thead th") || !checkTheadRowCount("thead th", 2)){
+        var tableData = [];
+        var columns = [];
+        var monthCol = [];
+        
+        function processHeaders(selector, indexOffset = 0) {
+            var result = [];
+            $(selector).each(function () {
+                var colspan = parseInt($(this).attr('colspan') || 1, 10);
+                var headerText = $(this).text().trim();
+                for (var i = 0; i < colspan; i++) {
+                    result.push({ header: headerText, index: result.length + indexOffset });
+                }
+            });
+            return result;
+        }
+        
+        var columns = processHeaders('#studentTable thead tr:nth-child(1) th');
+        var monthCol = processHeaders('#studentTable thead tr:nth-child(2) th', 2); // смещение +2 индекса
+        
+        
+        // Удаляем дубликаты заголовков, но сохраняем их индексы
+        var uniqueColumns = [];
+        columns.forEach(col => {
+            if (!uniqueColumns.some(uniqueCol => uniqueCol.header === col.header)) {
+                uniqueColumns.push(col);
+            }
+        });
+
+        var uniqueColumnsMonth = [];
+        monthCol.forEach(col => {
+            if (!uniqueColumnsMonth.some(uniqueCol => uniqueCol.header === col.header)) {
+                uniqueColumnsMonth.push(col);
+            }
+        });
+
+        $('#studentTable tbody tr').each(function () {
+            var rowDataColumns = uniqueColumns.map(col => processCell(this, col, columns));
+            var rowDataMonths = uniqueColumnsMonth.map(col => processCell(this, col, monthCol));
+            
+            // Добавляем в разные массивы, если требуется
+            tableData.push(rowDataColumns.concat(rowDataMonths));
+        });
+        
+        function processCell(row, col, columnList) {
+            var columnValues = columnList
+                .filter(c => c.header === col.header)
+                .map(column => {
+                    var cellValue = $(row).find(`td:nth-child(${column.index + 1})`).text().trim();
+                    if (cellValue === "ОТ" || cellValue === "Б") return 1;
+                    if (cellValue === "") return 0;
+                    return !isNaN(cellValue) ? parseFloat(cellValue) : cellValue;
+                });
+        
+            return columnValues.length === 1 && typeof columnValues[0] === "string"
+                ? columnValues[0] // Если единственное значение - строка, возвращаем как есть
+                : columnValues.reduce((acc, val) => acc + (typeof val === "number" ? val : 0), 0); // Суммируем только числа
+            
+        }
+
+        // Выводим массив строк - только заголовки для DataFrame
+        var allUniqueColumns = [...uniqueColumns, ...uniqueColumnsMonth]; // Объединяем массивы
+        var columnHeaders = allUniqueColumns.map(col => col.header); // Извлекаем заголовки
+    }
+    else{
+        var tableData = [];
+        var columns = [];
+    
+        // Обработка первой строки заголовка (первый tr)
+        $('#studentTable thead tr:nth-child(1) th').each(function () {
+            var colspan = $(this).attr('colspan');
+            if (colspan) {
+                // Обработка второй строки заголовка (второй tr)
+                var secondRowHeaders = document.querySelectorAll('#studentTable thead tr:nth-child(2) th');
+                for (var i = 0; i < colspan; i++) {
+                    columns.push(secondRowHeaders[i].textContent);
+                }
+            } else {
+                // Если colspan не указан, добавляем просто название столбца
+                columns.push($(this).text());
+            }
+        });
+    
+        // Обработка данных в теле таблицы
+        $('#studentTable tbody tr').each(function () {
+            var rowData = [];
+            $(this).find('td').each(function () {
+                if ($(this).text().trim() == '') {
+                    rowData.push('0');
+                }
+                else{
+                    if($(this).text().trim() == "ОТ" || $(this).text().trim() == 'Б') {
+                        rowData.push('1');
+                    }
+                    else{
+                        rowData.push($(this).text());
+                    }
+                }
+            });
+            tableData.push(rowData);
+        });
+
+        var columnHeaders = [...columns];
+    }
+
+    // // Вывод результата (для отладки)
+    // console.log("Unique Columns:", uniqueColumns);
+    // console.log("Unique Columns Month:", uniqueColumnsMonth);
+    // console.log("Table Data (column sums):", tableData);
+
 
     // Получаем значения из меню настроек
     var thresholdA = parseFloat($('#thresholdA').val());
     var thresholdB = parseFloat($('#thresholdB').val());
     var thresholdC = parseFloat($('#thresholdC').val());
-    var analysisMeasure = $('#analysisMeasure option:selected').text(); // Получаем текст выбранной опции из меню
 
     var analysisType = $('#analysisType').val(); // Получаем выбранную меру из меню
+    var analysisMeasure = $('#analysisMeasure option:selected').text().trim(); // Мера анализа
 
     // Округляем значения до 10 знаков после запятой
     thresholdA = parseFloat(thresholdA.toFixed(10));
@@ -1047,7 +1294,7 @@ function analyzeABCData() {
         url: '/analyzeabc',
         type: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({ data: tableData, columns: columns, thresholds: { A: thresholdA, B: thresholdB, C: thresholdC }, analysisMeasure: analysisMeasure, analysisType: analysisType }),
+        data: JSON.stringify({ data: tableData, columns: columnHeaders, thresholds: { A: thresholdA, B: thresholdB, C: thresholdC }, analysisMeasure: analysisMeasure, analysisType: analysisType }),
         success: function (response) {
             console.log("Server Response: ", response);
 
@@ -1167,37 +1414,129 @@ function analyzeABCData() {
 
 // XYZ-анализ
 function analyzeXYZData() {
-    var tableData = [];
-    var columns = [];
-
-    // Обработка первой строки заголовка (первый tr)
-    $('#studentTable thead tr:nth-child(1) th').each(function () {
-        var colspan = $(this).attr('colspan');
-        if (colspan) {
-            // Обработка второй строки заголовка (второй tr)
-            var secondRowHeaders = document.querySelectorAll('#studentTable thead tr:nth-child(2) th');
-            for (var i = 0; i < colspan; i++) {
-                columns.push(secondRowHeaders[i].textContent);
-            }
-        } else {
-            // Если colspan не указан, добавляем просто название столбца
-            columns.push($(this).text());
-        }
-    });
-
-    // Обработка данных в теле таблицы
-    $('#studentTable tbody tr').each(function () {
-        var rowData = [];
-        $(this).find('td').each(function () {
-            if ($(this).text().trim() == '') {
-                rowData.push('0');
-            }
-            else{
-                rowData.push($(this).text());
+    function checkLearningPeriods(selector) {
+        var theadRows = $(selector).closest('thead').find('tr');
+        var hasLearningPeriods = false;
+    
+        theadRows.each(function () {
+            if ($(this).text().includes("Учебные периоды")) {
+                hasLearningPeriods = true;
             }
         });
-        tableData.push(rowData);
-    });
+    
+        return hasLearningPeriods;
+    }
+
+    
+    function checkTheadRowCount(selector, expectedCount = 2) {
+        var theadRows = $(selector).closest('thead').find('tr');
+        return theadRows.length === expectedCount;
+    }
+
+    if (!checkLearningPeriods("thead th") || !checkTheadRowCount("thead th", 2)){
+        var tableData = [];
+        var columns = [];
+        var monthCol = [];
+        
+        function processHeaders(selector, indexOffset = 0) {
+            var result = [];
+            $(selector).each(function () {
+                var colspan = parseInt($(this).attr('colspan') || 1, 10);
+                var headerText = $(this).text().trim();
+                for (var i = 0; i < colspan; i++) {
+                    result.push({ header: headerText, index: result.length + indexOffset });
+                }
+            });
+            return result;
+        }
+        
+        var columns = processHeaders('#studentTable thead tr:nth-child(1) th');
+        var monthCol = processHeaders('#studentTable thead tr:nth-child(2) th', 2); // смещение +2 индекса
+        
+        
+        // Удаляем дубликаты заголовков, но сохраняем их индексы
+        var uniqueColumns = [];
+        columns.forEach(col => {
+            if (!uniqueColumns.some(uniqueCol => uniqueCol.header === col.header)) {
+                uniqueColumns.push(col);
+            }
+        });
+
+        var uniqueColumnsMonth = [];
+        monthCol.forEach(col => {
+            if (!uniqueColumnsMonth.some(uniqueCol => uniqueCol.header === col.header)) {
+                uniqueColumnsMonth.push(col);
+            }
+        });
+
+        $('#studentTable tbody tr').each(function () {
+            var rowDataColumns = uniqueColumns.map(col => processCell(this, col, columns));
+            var rowDataMonths = uniqueColumnsMonth.map(col => processCell(this, col, monthCol));
+            
+            // Добавляем в разные массивы, если требуется
+            tableData.push(rowDataColumns.concat(rowDataMonths));
+        });
+        
+        function processCell(row, col, columnList) {
+            var columnValues = columnList
+                .filter(c => c.header === col.header)
+                .map(column => {
+                    var cellValue = $(row).find(`td:nth-child(${column.index + 1})`).text().trim();
+                    if (cellValue === "ОТ" || cellValue === "Б") return 1;
+                    if (cellValue === "") return 0;
+                    return !isNaN(cellValue) ? parseFloat(cellValue) : cellValue;
+                });
+        
+            return columnValues.length === 1 && typeof columnValues[0] === "string"
+                ? columnValues[0] // Если единственное значение - строка, возвращаем как есть
+                : columnValues.reduce((acc, val) => acc + (typeof val === "number" ? val : 0), 0); // Суммируем только числа
+            
+        }
+
+        // Выводим массив строк - только заголовки для DataFrame
+        var allUniqueColumns = [...uniqueColumns, ...uniqueColumnsMonth]; // Объединяем массивы
+        var columnHeaders = allUniqueColumns.map(col => col.header); // Извлекаем заголовки
+    }
+    else{
+        var tableData = [];
+        var columns = [];
+    
+        // Обработка первой строки заголовка (первый tr)
+        $('#studentTable thead tr:nth-child(1) th').each(function () {
+            var colspan = $(this).attr('colspan');
+            if (colspan) {
+                // Обработка второй строки заголовка (второй tr)
+                var secondRowHeaders = document.querySelectorAll('#studentTable thead tr:nth-child(2) th');
+                for (var i = 0; i < colspan; i++) {
+                    columns.push(secondRowHeaders[i].textContent);
+                }
+            } else {
+                // Если colspan не указан, добавляем просто название столбца
+                columns.push($(this).text());
+            }
+        });
+    
+        // Обработка данных в теле таблицы
+        $('#studentTable tbody tr').each(function () {
+            var rowData = [];
+            $(this).find('td').each(function () {
+                if ($(this).text().trim() == '') {
+                    rowData.push('0');
+                }
+                else{
+                    if($(this).text().trim() == "ОТ" || $(this).text().trim() == 'Б') {
+                        rowData.push('1');
+                    }
+                    else{
+                        rowData.push($(this).text());
+                    }
+                }
+            });
+            tableData.push(rowData);
+        });
+
+        var columnHeaders = [...columns];
+    }
 
     // Получаем значения из меню настроек
     var thresholdX = parseFloat($('#thresholdX').val());
@@ -1216,7 +1555,7 @@ function analyzeXYZData() {
         url: '/analyzexyz',
         type: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({ data: tableData, columns: columns, thresholds: { X: thresholdX, Y: thresholdY, Z: thresholdZ }, analysisMeasure1: analysisMeasure1, analysisMeasure2: analysisMeasure2 }),
+        data: JSON.stringify({ data: tableData, columns: columnHeaders, thresholds: { X: thresholdX, Y: thresholdY, Z: thresholdZ }, analysisMeasure1: analysisMeasure1, analysisMeasure2: analysisMeasure2 }),
         success: function (response) {
             console.log("Server Response: ", response);
 
@@ -1332,90 +1671,216 @@ function analyzeXYZData() {
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Загрузка фото
+// document.addEventListener('DOMContentLoaded', function () {
+//     const photoInput = document.getElementById('photoInput');
+//     const photoPreviewContainer = document.getElementById('photoPreviewContainer');
+//     const photoUploadArea = document.getElementById('photoUploadArea');
+
+//     // Клик по области загрузки вызывает клик по input[type="file"] только если файл не выбран
+//     photoUploadArea.addEventListener('click', () => {
+//         photoInput.click();
+//     });
+
+//     // Обновление превью фотографий
+//     photoInput.addEventListener('change', function () {
+//         photoPreviewContainer.innerHTML = ''; // Очищаем контейнер
+//         Array.from(photoInput.files).forEach((file, index) => {
+//             const reader = new FileReader();
+//             reader.onload = (e) => {
+//                 const wrapper = document.createElement('div');
+//                 wrapper.classList.add('photo-wrapper');
+
+//                 const img = document.createElement('img');
+//                 img.src = e.target.result;
+
+//                 const removeButton = document.createElement('button');
+//                 removeButton.classList.add('remove-photo');
+//                 removeButton.innerText = '×';
+//                 removeButton.setAttribute('data-index', index);
+
+//                 removeButton.addEventListener('click', () => {
+//                     removePhoto(index);
+//                 });
+
+//                 wrapper.appendChild(img);
+//                 wrapper.appendChild(removeButton);
+//                 photoPreviewContainer.appendChild(wrapper);
+//             };
+//             reader.readAsDataURL(file);
+//         });
+
+//         // Используем количество файлов в photoInput для проверки
+//         toggleUploadAreaVisibility();
+//     });
+
+//     // Поддержка Drag & Drop
+//     photoUploadArea.addEventListener('dragover', (e) => {
+//         e.preventDefault();
+//         photoUploadArea.style.borderColor = '#007bff';
+//     });
+
+//     photoUploadArea.addEventListener('dragleave', () => {
+//         photoUploadArea.style.borderColor = '#ccc';
+//     });
+
+//     photoUploadArea.addEventListener('drop', (e) => {
+//         e.preventDefault();
+//         const files = e.dataTransfer.files;
+//         photoInput.files = files;
+//         const event = new Event('change');
+//         photoInput.dispatchEvent(event);
+//     });
+
+//     // Удаление фотографии
+//     function removePhoto(indexToRemove) {
+//         const fileListArray = Array.from(photoInput.files);
+//         fileListArray.splice(indexToRemove, 1);
+
+//         // Обновляем input с файлами
+//         const dataTransfer = new DataTransfer();
+//         fileListArray.forEach((file) => dataTransfer.items.add(file));
+//         photoInput.files = dataTransfer.files;
+
+//         // Обновляем превью
+//         const event = new Event('change');
+//         photoInput.dispatchEvent(event);
+//     }
+
+//     // Функция для скрытия или отображения области загрузки
+//     function toggleUploadAreaVisibility() {
+//         if (photoInput.files.length > 0) {
+//             photoUploadArea.classList.add('hide');  // Скрываем блок с загрузкой
+//         } else {
+//             photoUploadArea.classList.remove('hide');  // Показываем блок с загрузкой
+//         }
+//     }
+// });
+
 document.addEventListener('DOMContentLoaded', function () {
     const photoInput = document.getElementById('photoInput');
     const photoPreviewContainer = document.getElementById('photoPreviewContainer');
     const photoUploadArea = document.getElementById('photoUploadArea');
+    const deleteAllButton = document.getElementById('deleteAllButton');
+    const photoWrappers = document.querySelectorAll('.photo-wrapper');
 
-    // Клик по области загрузки вызывает клик по input[type="file"] только если файл не выбран
-    photoUploadArea.addEventListener('click', () => {
-        photoInput.click();
+    // Переменная для хранения всех выбранных файлов
+    let filesArray = [];
+
+    // MultiDrag сортировка с использованием Sortable.js
+    const sortable = new Sortable(photoPreviewContainer, {
+        animation: 150,
+        multiDrag: true,
+        fallbackTolerance: 3, // Для выбора элементов на мобильных устройствах
+        selectedClass: 'selected',
+        dragClass: 'dragging',
     });
 
-    // Обновление превью фотографий
+    photoUploadArea.addEventListener('click', () => {
+        photoInput.click();
+    });    
+
+    // Изменяем обработчик двойного клика
+    photoPreviewContainer.addEventListener('dblclick', function (event) {
+        const target = event.target;
+
+        // Проверяем, что двойной клик произошёл на контейнере фото (wrapper)
+        if (target.closest('.photo-wrapper')) {
+            const wrapper = target.closest('.photo-wrapper');
+
+            // Если у wrapper уже есть класс enlarged, убираем его
+            if (wrapper.classList.contains('enlarged')) {
+                wrapper.classList.remove('enlarged');
+            } else {
+                // Убираем класс enlarged у всех остальных фото
+                photoWrappers.forEach(w => w.classList.remove('enlarged'));
+
+                // Добавляем класс только для текущего фото-wrapper
+                wrapper.classList.add('enlarged');
+            }
+        }
+    });
+
     photoInput.addEventListener('change', function () {
-        photoPreviewContainer.innerHTML = ''; // Очищаем контейнер
-        Array.from(photoInput.files).forEach((file, index) => {
+        // Добавляем новые файлы в массив
+        const newFiles = Array.from(this.files);
+        filesArray = [...filesArray, ...newFiles]; // Объединяем старые и новые файлы
+    
+        // Обновляем photoInput
+        updatePhotoInput(); // ///////////////////////////П/О/М/Е/Н/Я/Л////////////////////////////////////////////////////////////////////////////
+
+        // Рендерим все актуальные файлы
+        renderPreviews();
+    });
+    
+    // Рендеринг всех актуальных превью
+    function renderPreviews() {
+        photoPreviewContainer.innerHTML = ''; // Очищаем контейнер превью
+    
+        // Для каждого файла в массиве рендерим превью
+        filesArray.forEach((file, index) => {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const wrapper = document.createElement('div');
                 wrapper.classList.add('photo-wrapper');
-
+    
                 const img = document.createElement('img');
                 img.src = e.target.result;
-
+    
                 const removeButton = document.createElement('button');
                 removeButton.classList.add('remove-photo');
                 removeButton.innerText = '×';
-                removeButton.setAttribute('data-index', index);
-
+    
+                // Удаление фотографии по индексу
                 removeButton.addEventListener('click', () => {
-                    removePhoto(index);
+                    removePhoto(index); // Удаляем файл по индексу
                 });
-
+    
                 wrapper.appendChild(img);
                 wrapper.appendChild(removeButton);
                 photoPreviewContainer.appendChild(wrapper);
             };
             reader.readAsDataURL(file);
         });
-
-        // Используем количество файлов в photoInput для проверки
-        toggleUploadAreaVisibility();
-    });
-
-    // Поддержка Drag & Drop
-    photoUploadArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        photoUploadArea.style.borderColor = '#007bff';
-    });
-
-    photoUploadArea.addEventListener('dragleave', () => {
-        photoUploadArea.style.borderColor = '#ccc';
-    });
-
-    photoUploadArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        const files = e.dataTransfer.files;
-        photoInput.files = files;
-        const event = new Event('change');
-        photoInput.dispatchEvent(event);
-    });
-
-    // Удаление фотографии
-    function removePhoto(indexToRemove) {
-        const fileListArray = Array.from(photoInput.files);
-        fileListArray.splice(indexToRemove, 1);
-
-        // Обновляем input с файлами
-        const dataTransfer = new DataTransfer();
-        fileListArray.forEach((file) => dataTransfer.items.add(file));
-        photoInput.files = dataTransfer.files;
-
-        // Обновляем превью
-        const event = new Event('change');
-        photoInput.dispatchEvent(event);
+    
+        toggleDeleteAllButton(); // Обновляем видимость кнопки "Удалить все"
     }
-
-    // Функция для скрытия или отображения области загрузки
-    function toggleUploadAreaVisibility() {
-        if (photoInput.files.length > 0) {
-            photoUploadArea.classList.add('hide');  // Скрываем блок с загрузкой
+    
+    // Показываем или скрываем кнопку "Удалить все фото"
+    function toggleDeleteAllButton() {
+        if (filesArray.length > 0) {
+            deleteAllButton.classList.remove('hide');
         } else {
-            photoUploadArea.classList.remove('hide');  // Показываем блок с загрузкой
+            deleteAllButton.classList.add('hide');
         }
     }
+
+    // Удаление фотографии по индексу
+    function removePhoto(indexToRemove) {
+        // Удаляем файл из массива по индексу
+        filesArray.splice(indexToRemove, 1);
+
+        // Обновляем файл в photoInput
+        updatePhotoInput();
+
+        // Перерисовываем превью
+        renderPreviews();
+    }
+
+    // Обновление photoInput.files
+    function updatePhotoInput() {
+        const dataTransfer = new DataTransfer();
+        filesArray.forEach((file) => dataTransfer.items.add(file));
+        photoInput.files = dataTransfer.files; // Обновляем input с новыми файлами
+    }
+
+    // Удаление всех фото
+    deleteAllButton.addEventListener('click', () => {
+        filesArray = []; // Очищаем массив файлов
+        photoInput.value = ''; // Сбрасываем input
+        renderPreviews(); // Перерисовываем пустое превью
+    });
 });
+
 
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -1463,64 +1928,62 @@ document.addEventListener("DOMContentLoaded", function () {
 const photoInput = document.getElementById('photoInput');
 const selectedDatesList = document.getElementById('selectedDatesList');
 
-function validateDatesAndPhotos() {
-    const datesCount = selectedDatesList.children.length;
-    const photosCount = photoInput.files.length;
+// function validateDatesAndPhotos() {
+//     const datesCount = selectedDatesList.children.length;
+//     const photosCount = photoInput.files.length;
 
-    const message = document.getElementById('validationMessage');
-    if (!message) {
-        const validationDiv = document.createElement('div');
-        validationDiv.id = 'validationMessage';
-        document.querySelector('.containerForUploadPhotos').appendChild(validationDiv);
-    }
+//     const message = document.getElementById('validationMessage');
+//     if (!message) {
+//         const validationDiv = document.createElement('div');
+//         validationDiv.id = 'validationMessage';
+//         document.querySelector('.containerForUploadPhotos').appendChild(validationDiv);
+//     }
 
-    if (datesCount !== photosCount) {
-        message.textContent = `Количество выбранных дат (${datesCount}) и загруженных фотографий (${photosCount}) не совпадает.`;
-        message.style.color = 'red';
-    } else {
-        message.textContent = 'Все проверки пройдены.';
-        message.style.color = 'green';
-    }
-}
+//     if (datesCount !== photosCount) {
+//         message.textContent = `Количество выбранных дат (${datesCount}) и загруженных фотографий (${photosCount}) не совпадает.`;
+//         message.style.color = 'red';
+//     } else {
+//         message.textContent = 'Все проверки пройдены.';
+//         message.style.color = 'green';
+//     }
+// }
 
-function renderAttendanceTable(data) {
-    const table = document.getElementById('studentTable');
-    const thead = table.querySelector('thead');
-    const tbody = table.querySelector('tbody');
+// function renderAttendanceTable(data) {
+//     const table = document.getElementById('studentTable');
+//     const thead = table.querySelector('thead');
+//     const tbody = table.querySelector('tbody');
 
-    // Очищаем текущие данные
-    thead.innerHTML = '';
-    tbody.innerHTML = '';
+//     // Очищаем текущие данные
+//     thead.innerHTML = '';
+//     tbody.innerHTML = '';
 
-    // Формируем заголовки
-    const headerRow = document.createElement('tr');
-    const dateHeader = document.createElement('th');
-    dateHeader.textContent = 'Дата';
-    const absentHeader = document.createElement('th');
-    absentHeader.textContent = 'Отсутствующие';
-    headerRow.appendChild(dateHeader);
-    headerRow.appendChild(absentHeader);
-    thead.appendChild(headerRow);
+//     // Формируем заголовки
+//     const headerRow = document.createElement('tr');
+//     const dateHeader = document.createElement('th');
+//     dateHeader.textContent = 'Дата';
+//     const absentHeader = document.createElement('th');
+//     absentHeader.textContent = 'Отсутствующие';
+//     headerRow.appendChild(dateHeader);
+//     headerRow.appendChild(absentHeader);
+//     thead.appendChild(headerRow);
 
-    // Заполняем строки
-    Object.keys(data).forEach(date => {
-        const row = document.createElement('tr');
-        const dateCell = document.createElement('td');
-        dateCell.textContent = date;
+//     // Заполняем строки
+//     Object.keys(data).forEach(date => {
+//         const row = document.createElement('tr');
+//         const dateCell = document.createElement('td');
+//         dateCell.textContent = date;
 
-        const absentCell = document.createElement('td');
-        absentCell.textContent = data[date]['absent'].join(', ');
+//         const absentCell = document.createElement('td');
+//         absentCell.textContent = data[date]['absent'].join(', ');
 
-        row.appendChild(dateCell);
-        row.appendChild(absentCell);
-        tbody.appendChild(row);
-    });
+//         row.appendChild(dateCell);
+//         row.appendChild(absentCell);
+//         tbody.appendChild(row);
+//     });
 
-    // Показываем таблицу
-    document.querySelector('.containerTable').style.display = 'block';
-}
-
-
+//     // Показываем таблицу
+//     document.querySelector('.containerTable').style.display = 'block';
+// }
 
 
 
@@ -1533,6 +1996,9 @@ function renderAttendanceTable(data) {
 $(document).ready(function () {
     $('#photoUploadForm').on('submit', function (e) {
         e.preventDefault();
+
+        // Очистка превью для показа распознавания
+        resetProgress()
 
         const selectedDates = Array.from(document.getElementById('selectedDatesList').children)
         .map(item => item.textContent); // Список выбранных дат
@@ -1578,65 +2044,91 @@ $(document).ready(function () {
                 // Объединение пустых ячеек в заголовках
                 var prevHeader = null;
                 var colspan = 1;
-
+                
                 let emptyIndices = [];
                 var ind = 0;
-
-                // Найти индексы строк, которые равны ""
+                
+                // Найти индексы пустых строк
                 response.data[0].forEach(function (cell) {
                     if (cell === "") {
                         emptyIndices.push(ind);
                     }
                     ind += 1;
                 });
-
+                
                 var theadRow = '<tr>';
                 response.columns.forEach(function (column, index) {
-                    if (column === "") {
-                        colspan++;
-                    } else {
+                    // Первые две и последняя колонки - фиксированный rowspan
+                    if (index === 0 || index === 1 || index === response.columns.length - 1) {
                         if (prevHeader !== null) {
-                            if (emptyIndices.includes(index - 1)) {
-                                theadRow += `<th rowspan="2">${prevHeader}</th>`;
-                            }
-                            else {
-                                theadRow += `<th colspan="${colspan}">${prevHeader}</th>`;
-                            }
+                            theadRow += `<th colspan="${colspan}">${prevHeader}</th>`;
                             colspan = 1;
                         }
-                        prevHeader = column;
+                        theadRow += `<th rowspan="3">${column}</th>`;
+                        prevHeader = null; // Сбрасываем заголовок
+                    } else {
+                        // Для остальных колонок вычисляем colspan
+                        if (column === "") {
+                            colspan++;
+                        } else {
+                            if (prevHeader !== null) {
+                                theadRow += `<th colspan="${colspan}">${prevHeader}</th>`;
+                                colspan = 1;
+                            }
+                            prevHeader = column;
+                        }
                     }
                 });
-                if (prevHeader !== null) {
-                    if (emptyIndices.includes(response.columns.length - 1)) {
-                        theadRow += `<th rowspan="2">${prevHeader}</th>`;
-                    }
-                    else {
-                        theadRow += `<th colspan="${colspan}">${prevHeader}</th>`;
-                    }
-                }
                 theadRow += '</tr>';
-                $('#studentTable thead').append(theadRow);
+                $('#studentTable thead').append(theadRow);                
 
-                // Заполнение первой строки данных в таблице
                 var firstRow = '<tr>';
-                response.data[0].forEach(function (cell) {
-                    if (cell !== "") {
-                        firstRow += `<th>${cell || ""}</th>`;
+                let lastHeader = null; // Последний найденный месяц
+                let monthColspan = 0;  // Количество колонок для текущего месяца
+
+                response.data[0].forEach(function (cell, index) {
+                    if (index > 1 && index < response.data[0].length - 1) { // Пропускаем первые две и последнюю колонки
+                        if (cell === "") {
+                            monthColspan++; // Увеличиваем счетчик пустых ячеек
+                        } else {
+                            if (lastHeader !== null) {
+                                // Добавляем предыдущий заголовок с накопленным colspan
+                                firstRow += `<th colspan="${monthColspan + 1}">${lastHeader}</th>`;
+                            }
+                            // Обновляем последний заголовок и сбрасываем счетчик
+                            lastHeader = cell;
+                            monthColspan = 0;
+                        }
                     }
                 });
+
+                // Обработка последнего заголовка (если он существует)
+                if (lastHeader !== null) {
+                    firstRow += `<th colspan="${monthColspan + 1}">${lastHeader}</th>`;
+                }
+
                 firstRow += '</tr>';
                 $('#studentTable thead').append(firstRow);
 
+
+                var secondRow = '<tr>';
+                response.data[1].forEach(function (cell) {
+                    if (cell !== "") {
+                        secondRow += `<th>${cell || ""}</th>`;
+                    }
+                });
+                secondRow += '</tr>';
+                $('#studentTable thead').append(secondRow);
+
                 var rowData = []; // Массив для хранения значений ячеек
 
-                // Заполнение данных в таблице, начиная с второй строки
-                response.data.slice(1).forEach(function (row) {
+                // Заполнение данных в таблице, начиная с третьей строки
+                response.data.slice(2).forEach(function (row) {
                     var newRow = '<tr>';
                     row.forEach(function (cell) {
-                        var cellValue = cell || "";
+                        var cellValue = cell !== null && cell !== undefined ? cell : "";
                         newRow += `<td>${cellValue}</td>`;
-                        rowData.push(cellValue)
+                        rowData.push(cellValue);
                     });
                     newRow += '</tr>';
                     $('#studentTable tbody').append(newRow);
@@ -1675,110 +2167,83 @@ $(document).ready(function () {
                     alert('Ошибка: данные не соответствуют образцу загрузки.');
                 }
 
-                // Определение меры анализа на основе загруженных данных
-                var containsAllGrade = response.columns.includes('Год');
-                var contains1 = response.data[0].includes('1 четверть');
-                var contains2 = response.data[0].includes('2 четверть');
-                var contains3 = response.data[0].includes('3 четверть');
-                var contains4 = response.data[0].includes('4 четверть');
-                var containsMedium1 = response.columns.includes('1 полугодие');
-                var containsMedium2 = response.columns.includes('2 полугодие');
-                var containsYearTotal = response.columns.includes('Итог.');
-                var containsPeriodTotal = response.columns.includes('Итог за период');
-                var containsPeriodGrade = response.columns.includes('Оценка за период');
-
-                var analysisMeasure = $('#analysisMeasure');
-                // Показ опций, которые остались отключенными
-                analysisMeasure.find('option:disabled').show();
-
-                analysisMeasure.find('option').prop('disabled', true);
-                // Включаем опции для анализа посещаемости, если они присутствуют в данных
-                if (containsAttendanceDays) {
-                    analysisMeasure.find('option[value="attendanceDays"]').prop('disabled', false);
-                }
-                if (containsPeriodTotal) {
-                    analysisMeasure.find('option[value="periodTotal"]').prop('disabled', false);
-                }
-                if (contains1) {
-                    analysisMeasure.find('option[value="quarter1"]').prop('disabled', false);
-                }
-                if (contains2) {
-                    analysisMeasure.find('option[value="quarter2"]').prop('disabled', false);
-                }
-                if (contains3) {
-                    analysisMeasure.find('option[value="quarter3"]').prop('disabled', false);
-                }
-                if (contains4) {
-                    analysisMeasure.find('option[value="quarter4"]').prop('disabled', false);
-                }
-                // Включаем опции для анализа успеваемости, если они присутствуют в данных
-                if (containsAverageGrade) {
-                    analysisMeasure.find('option[value="averageGrade"]').prop('disabled', false);
-                }
-                if (containsAllGrade) {
-                    analysisMeasure.find('option[value="year"]').prop('disabled', false);
-                }
-                if (containsMedium1) {
-                    analysisMeasure.find('option[value="medium1"]').prop('disabled', false);
-                }
-                if (containsMedium2) {
-                    analysisMeasure.find('option[value="medium2"]').prop('disabled', false);
-                }
-                if (containsYearTotal) {
-                    analysisMeasure.find('option[value="yearTotal"]').prop('disabled', false);
-                }
-                if (containsPeriodGrade) {
-                    analysisMeasure.find('option[value="gradePeriod"]').prop('disabled', false);
-                }
-
-                // Скрытие опций, которые остались отключенными
-                analysisMeasure.find('option:disabled').hide();
+                const analysisMeasure = $('#analysisMeasure');
+                analysisMeasure.empty(); // Очищаем существующие опции
                 
-                // Выбор первой доступной опции
-                analysisMeasure.find('option:not(:disabled)').first().prop('selected', true);
+                const excludedIndices = [0, 1]; // Пропускаем первые два столбца
+                const measures = new Set(); // Уникальные значения для опций
+                
+                // Функция проверки, что все значения в столбце, начиная с data[3], пустые
+                function isColumnEmptyInRows(data, columnIndex) {
+                    // Проверяем все строки, начиная с data[3]
+                    return data.slice(3).every(row => !row[columnIndex] || row[columnIndex] === "");
+                }
 
-                // Проверка данных для включения соответствующих опций
-                var contains1 = response.data[0].includes('1 четверть');
-                var contains2 = response.data[0].includes('2 четверть');
-                var contains3 = response.data[0].includes('3 четверть');
-                var contains4 = response.data[0].includes('4 четверть');
-                var containsMedium1 = response.data[0].includes('1 полугодие');
-                var containsMedium2 = response.data[0].includes('2 полугодие');
-                var containsFinal = response.columns.includes('Итог за период');
+                // Функция для фильтрации заголовков, исключая столбцы, в которых все значения пустые начиная с data[3]
+                function filterHeaders(headers, data) {
+                    return headers.filter((header, index) => {
+                        // Исключаем заголовки, если в соответствующем столбце, начиная с data[3], все значения пустые
+                        return !isColumnEmptyInRows(data, index);
+                    });
+                }
 
-                // Функция для управления опциями в выпадающем списке
-                function manageOptions(selector, conditions, options) {
-                    var select = $(selector);
-                    select.find('option').prop('disabled', true);
-                    
-                    for (var i = 0; i < conditions.length; i++) {
-                        if (conditions[i]) {
-                            select.find(`option[value="${options[i]}"]`).prop('disabled', false);
+                // Обработка всех возможных строк с заголовками
+                const headers = [
+                    ...filterHeaders(response.columns || [], response.data),  // Фильтруем для columns
+                    ...filterHeaders(response.data[0] || [], response.data),  // Фильтруем для data[0]
+                ];
+                
+                // Перебираем заголовки и добавляем уникальные значения
+                headers.forEach((header, index) => {
+                    if (!excludedIndices.includes(index)) {
+                        // Проверяем, если это строка, и она не пустая
+                        if (typeof header === "string" && header.trim() !== "") {
+                            measures.add(header.trim()); // Добавляем уникальное значение в measures
+                        }
+                        // Если это не строка, но не пустое значение (не null и не undefined)
+                        else if (header !== null && header !== undefined && header !== "") {
+                            measures.add(header); // Добавляем значение как есть
                         }
                     }
-                    
-                    // Скрытие опций, которые остались отключенными
-                    select.find('option:disabled').hide();
-                    
-                    // Выбор первой доступной опции
-                    select.find('option:not(:disabled)').first().prop('selected', true);
-                }
-
-                // Условия для начального и конечного периода
-                var quarterConditions = [contains1, contains2, contains3, contains4];
-                var quarterOptions = ['Q1', 'Q2', 'Q3', 'Q4'];
+                });
                 
-                var mediumConditions = [containsMedium1, containsMedium2];
-                var mediumOptions = ['H1', 'H2'];
+                // Генерация опций для селектора
+                measures.forEach((measure) => {
+                    analysisMeasure.append(`<option value="${measure}">${measure}</option>`);
+                });
+                
+                if(analysisMeasure?.length){
+                    // Если есть доступные опции, выбираем первую
+                    if (analysisMeasure.children().length > 0) {
+                        analysisMeasure.find('option').first().prop('selected', true);
+                    } else {
+                        alert('Нет доступных мер анализа.');
+                    }
+                }
+                
 
-                var finalOption = 'I';
+                // Для XYZ-анализа
+                const startMeasure = $('#startQuarter');
+                startMeasure.empty(); // Очищаем существующие опции
+                const endMeasure = $('#endQuarter');
+                endMeasure.empty(); // Очищаем существующие опции
 
-                // Управление опциями для начального периода
-                manageOptions('#startQuarter', quarterConditions.concat(mediumConditions).concat(containsFinal), quarterOptions.concat(mediumOptions).concat(finalOption));
-
-                // Управление опциями для конечного периода
-                manageOptions('#endQuarter', quarterConditions.concat(mediumConditions).concat(containsFinal), quarterOptions.concat(mediumOptions).concat(finalOption));
-
+                // Генерация опций для селектора
+                measures.forEach((measure) => {
+                    startMeasure.append(`<option value="${measure}">${measure}</option>`);
+                    endMeasure.append(`<option value="${measure}">${measure}</option>`);
+                });
+                
+                if(startMeasure?.length && endMeasure?.length){
+                    // Если есть доступные опции, выбираем первую
+                    if (startMeasure.children().length > 0 && endMeasure.children().length > 0) {
+                        startMeasure.find('option').first().prop('selected', true);
+                        endMeasure.find('option').first().prop('selected', true);
+                    } else {
+                        alert('Нет доступных мер анализа.');
+                    }
+                }
+                
                 $('.containerTable').css('display', 'table');
             
             },
@@ -1788,4 +2253,135 @@ $(document).ready(function () {
             }
         });
     });
+});
+
+
+// Функция переключения вкладок
+function openTab(evt, tabId) {
+    // Скрываем все табы
+    const tabs = document.querySelectorAll('.tab-content');
+    tabs.forEach(tab => tab.classList.remove('active'));
+
+    // Убираем класс активности у кнопок
+    const tabButtons = document.querySelectorAll('.tab');
+    tabButtons.forEach(button => button.classList.remove('active'));
+
+    // Показываем выбранный таб
+    document.getElementById(tabId).classList.add('active');
+    evt.currentTarget.classList.add('active');
+}
+
+
+// // Получение обновления прогресса
+// socket.on('photo_processed', function (data) {
+//     const progress = document.getElementById('progress');
+//     progress.textContent = `Обработано фото ${data.photo_index} из ${data.total_photos}`;
+    
+//     const processedPhotos = document.getElementById('processedPhotos');
+//     const studentList = data.recognized_students.map(id => `<li>Студент ID: ${id}</li>`).join('');
+//     processedPhotos.innerHTML += `<p>Фото ${data.photo_index}: <ul>${studentList}</ul></p>`;
+// });
+
+// // Получение превью обработанного фото
+// socket.on('photo_preview', function (data) {
+//     const photoPreviewContainer = document.getElementById('photoPreviewContainer');
+//     const img = document.createElement('img');
+//     img.src = `data:image/jpeg;base64,${data.image}`;
+//     img.className = 'photo-preview';
+//     photoPreviewContainer.appendChild(img);
+// });
+
+// // Получение ошибок
+// socket.on('processing_error', function (data) {
+//     alert(`Ошибка обработки: ${data.error}`);
+// });
+
+const socket = io.connect();
+
+// Массив для хранения фото
+let photos = [];
+let currentPhotoIndex = 0;
+let isInfoVisible = false; // Флаг для отображения текстовой информации
+
+// Очистка перед загрузкой
+function resetProgress() {
+    photos = [];
+    currentPhotoIndex = 0;
+    document.getElementById('progressText').textContent = 'Обработано фото 0 из 0';
+    document.getElementById('progressBarFill').style.width = '0%';
+    document.getElementById('processedPhotos').innerHTML = '';
+    document.getElementById('photoCounter').textContent = 'Фото 0 из 0';
+    updateCarousel();
+}
+
+// Обновление карусели
+function updateCarousel() {
+    const currentPhoto = document.getElementById('currentPhoto');
+    currentPhoto.src = photos[currentPhotoIndex] || '/static/placeholder.jpeg';
+
+    const photoCounter = document.getElementById('photoCounter');
+    photoCounter.textContent = `Фото ${currentPhotoIndex + 1} из ${photos.length}`;
+}
+
+// Переключение фото
+document.getElementById('prevPhoto').addEventListener('click', () => {
+    if (photos.length > 0) {
+        currentPhotoIndex = (currentPhotoIndex - 1 + photos.length) % photos.length;
+        updateCarousel();
+    }
+});
+
+document.getElementById('nextPhoto').addEventListener('click', () => {
+    if (photos.length > 0) {
+        currentPhotoIndex = (currentPhotoIndex + 1) % photos.length;
+        updateCarousel();
+    }
+});
+
+// Кнопка сворачивания информации
+document.getElementById('toggleInfo').addEventListener('click', () => {
+    const processedPhotos = document.getElementById('processedPhotos');
+    isInfoVisible = !isInfoVisible;
+
+    if (isInfoVisible) {
+        processedPhotos.style.display = 'block';
+        document.getElementById('toggleInfo').textContent = 'Скрыть информацию';
+    } else {
+        processedPhotos.style.display = 'none';
+        document.getElementById('toggleInfo').textContent = 'Показать информацию';
+    }
+});
+
+// Обработка событий от сокета
+socket.on('photo_processed', function (data) {
+    const progressBarFill = document.getElementById('progressBarFill');
+    const progressText = document.getElementById('progressText');
+
+    // Обновление прогресса
+    const progressPercentage = (data.photo_index / data.total_photos) * 100;
+    progressBarFill.style.width = `${progressPercentage}%`;
+    progressText.textContent = `Обработано фото ${data.photo_index} из ${data.total_photos}`;
+    
+    // Добавление информации о студентах
+    if (data.recognized_students) {
+        const processedPhotos = document.getElementById('processedPhotos');
+        const studentList = data.recognized_students
+            .map(name => `<li>ФИО ученика: ${name}</li>`)
+            .join('');
+        processedPhotos.innerHTML += `<p>Фото ${data.photo_index}: <ul>${studentList}</ul></p>`;
+    }
+});
+
+socket.on('photo_preview', function (data) {
+    // Добавление фото в карусель
+    const photoSrc = `data:image/jpeg;base64,${data.image}`;
+    if (!photos.includes(photoSrc)) { // Предотвращение дублирования
+        photos.push(photoSrc);
+        updateCarousel();
+    }
+});
+
+// Обработка ошибок
+socket.on('processing_error', function (data) {
+    alert(`Ошибка обработки: ${data.error}`);
 });

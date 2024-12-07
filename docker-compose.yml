@@ -11,6 +11,7 @@ services:
       - app-network
     volumes:
       - ./static:/app/static  # Монтируем локальную папку static внутрь контейнера
+      - ./fonts:/app/fonts  # Монтируем локальную папку со шрифтами
 
   db:
     image: postgres:alpine3.20

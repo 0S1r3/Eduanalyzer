@@ -80,6 +80,11 @@ h1 {
     margin-bottom: 30px;
 }
 
+h2 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
 .containerTable {
     width: 90%;
     margin: 0 auto;
@@ -637,15 +642,15 @@ input[type="submit"]:hover {
     z-index: 10; /* Крестик всегда над фото */
 }
 
-.photo-preview-container img:hover {
-    transform: scale(2); /* Увеличение изображения */
+.photo-preview-container .photo-wrapper img.enlarged {
+    transform: scale(2); /* Увеличение изображения при двойном нажатии */
     border-color: #007bff;
     z-index: 10; /* Поверх всех других изображений */
     transform-origin: top left; /* Масштабирование от верхнего левого угла */
 }
 
 /* Крестик позиционируется в верхнем правом углу */
-.photo-preview-container .photo-wrapper:hover .remove-photo {
+.photo-preview-container .photo-wrapper.enlarged .remove-photo {
     transform: scale(1.1); /* Увеличение изображения */
     z-index: 20; /* Крестик выше увеличенного фото */
     bottom: calc((90% * 2) - 5px); /* Увеличиваем отступ от нижней границы фото */
@@ -658,29 +663,31 @@ input[type="submit"]:hover {
     pointer-events: none; /* Убираем интерактивность */
 }
 
+/* Показывать крестик при наведении */
 .photo-preview-container .photo-wrapper:hover .remove-photo {
-    opacity: 1; /* Показываем крестик только для активного фото */
-    pointer-events: auto; /* Включаем интерактивность для активного крестика */
+    opacity: 1; /* Показываем крестик */
+    pointer-events: auto; /* Делаем его интерактивным */
 }
 
-/* Отключаем взаимодействие с другими фото */
-.photo-preview-container:hover .photo-wrapper img {
-    pointer-events: none;
-    transition: none;
-}
-
-/* Изменение поведения изображения: оно остается увеличенным даже при наведении на крестик */
-.photo-preview-container .photo-wrapper:hover img {
-    transform: scale(2); /* Увеличенное изображение остается увеличенным */
+/* Увеличенное фото остается интерактивным */
+.photo-preview-container .photo-wrapper.enlarged img {
+    transform: scale(2); /* Увеличенное изображение */
     border-color: #007bff;
-    z-index: 10; /* Поверх всех других изображений */
-    transform-origin: top left; /* Масштабирование от верхнего левого угла */
+    z-index: 10;
+    transform-origin: top left;
     pointer-events: auto; /* Только увеличенное фото интерактивно */
 }
 
-/* Скрыть крестик, когда курсор не над изображением или крестиком */
-.photo-preview-container .photo-wrapper:hover img {
-    transition: none;
+/* Крестик на увеличенном изображении всегда виден */
+.photo-preview-container .photo-wrapper.enlarged .remove-photo {
+    opacity: 1; /* Крестик всегда виден на увеличенном фото */
+    pointer-events: auto; /* Крестик интерактивен */
+}
+
+/* Увеличенное фото игнорирует интерактивность остальных элементов */
+.photo-preview-container .photo-wrapper.enlarged ~ .photo-wrapper img {
+    pointer-events: none; /* Отключаем взаимодействие с другими изображениями */
+    transition: none; /* Убираем анимацию */
 }
 
 .hide {
@@ -688,7 +695,7 @@ input[type="submit"]:hover {
 }
 
 .upload-button {
-    margin-top: 110px;
+    margin-top: 30px;
     padding: 10px 20px;
     background-color: #007bff;
     color: #fff;
@@ -782,4 +789,221 @@ label {
 .flatpickr-calendar {
     margin: 0 auto; /* Центрирование календаря */
     text-align: center; /* Центрирование текста внутри календаря */
+}
+
+
+/* ВКЛАДКИ  */
+/* Общий стиль для вкладок */
+.tabs {
+    display: flex;
+    border-bottom: 2px solid #ddd;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+/* Каждая вкладка */
+.tab {
+    padding: 10px 25px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    text-align: center;
+    border: 1px solid transparent;
+    border-bottom: none;
+    background-color: #0336d1;
+    margin-right: 5px;
+    border-radius: 5px 5px 0 0;
+    transition: all 0.3s ease;
+}
+
+/* Активная вкладка */
+.tab.active {
+    background-color: #012fba;
+    color: white;
+    border: 1px solid #ddd;
+    border-bottom: 2px solid #fff;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Наведение мыши на вкладку */
+.tab:hover {
+    background-color: #0028a0;
+    color: white;
+}
+
+/* Контейнер содержимого вкладки */
+.tab-content {
+    display: none;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Анимация появления содержимого */
+.tab-content.active {
+    display: block;
+}
+
+/* Анимация появления */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Кнопка "Удалить все фото" */
+.delete-all-button {
+    margin: 20px auto;
+    padding: 15px 30px;
+    background: linear-gradient(90deg, #ff416c, #ff4b2b);
+    border: none;
+    border-radius: 50px;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: 0px 4px 15px rgba(255, 75, 43, 0.6);
+    transition: all 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-all-button:hover {
+    background: linear-gradient(90deg, #ff4b2b, #ff416c);
+    box-shadow: 0px 6px 20px rgba(255, 75, 43, 0.8);
+    transform: scale(1.05);
+}
+
+.delete-all-button:active {
+    transform: scale(0.95);
+}
+
+/* Стили для выделенного изображения */
+.photo-wrapper.selected {
+    border: 4px solid #ff1500; /* Увеличенная рамка */
+    box-shadow: 0 0 15px rgba(255, 21, 0, 0.6); /* Более яркая тень для выделения */
+    border-radius: 5px; /* Добавим слегка закругленные углы для эстетики */
+    transform: scale(1.05); /* Небольшое увеличение элемента */
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border 0.2s ease; /* Плавный переход */
+}
+
+
+/* Для фото в реал-лайф распознавание */
+.real-time-display {
+    border: 1px solid #ccc;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    margin: 20px auto;
+}
+
+.real-time-display h3 {
+    text-align: center;
+    color: #333;
+    font-family: Arial, sans-serif;
+    margin-bottom: 20px;
+}
+
+.progress-bar {
+    position: relative;
+    width: 100%;
+    height: 20px;
+    background-color: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background-color: #4caf50;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    color: #fff;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.photo-carousel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.carousel-button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.carousel-button:hover {
+    background-color: #0056b3;
+}
+
+.carousel-image {
+    max-width: 600px;
+    max-height: 600px;
+    object-fit: cover;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.processed-photos {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: #555;
+}
+
+.photo-counter {
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.toggle-info-button {
+    display: block;
+    margin: 10px auto;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.toggle-info-button:hover {
+    background-color: #0056b3;
 }

@@ -10,6 +10,8 @@ import os
 from datetime import datetime
 import json
 import locale
+from collections import defaultdict
+import eventlet
 
 import pandas as pd
 import plotly.express as px
@@ -17,18 +19,22 @@ from functions.format import format_value  # Импорт функции из д
 from functions.analyzeABC import analyzeABC_data
 from functions.analyzeXYZ import analyzeXYZ_data
 from functions.analyzeABCXYZ import analyze_ABC_XYZ
-from functions.recognizedPhoto import get_known_faces_and_ids, process_class_photo, check_photo_once
+from functions.recognizedPhoto import get_known_faces_and_ids, process_class_photo, check_photo_once, get_student_info_by_user_id
+from functions.socketio_helpers import socketio, init_socketio
 
 app = Flask(__name__, static_folder='static')
 app.config['SECRET_KEY'] = '24g0274r_mbg(^61*_qm89t*ss&gs4ha1b5p1)#*0fu4iu0jb('
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://user:password@db:5432/school_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ECHO'] = True
-
+app.config['SQLALCHEMY_ECHO'] = False
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Устанавливаем лимит в 16MB
 
 locale.setlocale(locale.LC_TIME, 'ru_RU.UTF-8')
 
 db.init_app(app)
+
+# Инициализация socket.io
+init_socketio(app)
 
 ##########################ДИНАМИЧЕСКАЯ ЗАГРУЗКА ДАННЫХ#########################################
 @app.route('/api/teachers', methods=['GET'])
@@ -1296,9 +1302,9 @@ def abc_page():
 
     # Ищем пользователя в базе
     user = User.query.filter_by(id_user=session['user_id']).first()
-    if not user or user.role != 'teacher':
-        flash('Только учителя могут загружать фотографии.')
-        return redirect(url_for('dashboard'))
+    # if not user or user.role != 'teacher':
+    #     flash('Только учителя могут загружать фотографии.')
+    #     return redirect(url_for('dashboard'))
 
     # Получаем информацию о текущем учителе
     teacher = Teacher.query.filter_by(user_id=user.id_user).first()
@@ -1322,7 +1328,35 @@ def abc_page():
 
 @app.route('/xyz')
 def xyz_page():
-    return render_template('xyz.html')
+    if 'user_id' not in session:
+        flash('Вы должны войти в систему, чтобы загружать фотографии.')
+        return redirect(url_for('dashboard'))
+
+    # Ищем пользователя в базе
+    user = User.query.filter_by(id_user=session['user_id']).first()
+    # if not user or user.role != 'teacher':
+    #     flash('Только учителя могут загружать фотографии.')
+    #     return redirect(url_for('dashboard'))
+
+    # Получаем информацию о текущем учителе
+    teacher = Teacher.query.filter_by(user_id=user.id_user).first()
+    if not teacher:
+        flash('Учитель не найден.')
+        return redirect(url_for('dashboard'))
+
+    # Получаем предметы, которые ведет учитель
+    subjects = db.session.query(Subject).join(Teacher, Teacher.id_subject == Subject.id_subject)\
+                .filter(Teacher.user_id == user.id_user).all()
+    
+    # Получаем список всех классов
+    classes = db.session.query(Student.class_number, Student.class_letter).distinct().all()
+
+    return render_template(
+        'xyz.html',
+        subjects=subjects,
+        classes=classes,
+        teacher_name=f"{teacher.surname} {teacher.first_name} {teacher.patronymic}"
+    )
 
 @app.route('/abcxyz')
 def abcxyz_page():
@@ -3884,9 +3918,16 @@ def register():
         # Хешируем пароль перед сохранением
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-        # Создаем запись пользователя
-        user = User(user_login=username, user_password=hashed_password, role=role, photo=photo_data)
-        db.session.add(user)
+        check, face_encodings = check_photo_once(photo_data)
+
+        if check and face_encodings:
+            # Создаем запись пользователя
+            user = User(user_login=username, user_password=hashed_password, role=role, photo=photo_data, photo_embeddings=face_encodings[0].tolist())
+            db.session.add(user)
+        else:
+            # Создаем запись пользователя
+            user = User(user_login=username, user_password=hashed_password, role=role, photo=photo_data)
+            db.session.add(user)
         db.session.commit()
 
         if role == 'student':
@@ -4004,17 +4045,6 @@ def analyze_photos():
         return jsonify({'error': 'Пользователь не авторизован'}), 401
 
     user_id = session['user_id']
-    teacher = (
-        db.session.query(Teacher)
-        .join(User, Teacher.user_id == User.id_user)
-        .filter(User.id_user == user_id)
-        .first()
-    )
-
-    if not teacher:
-        return jsonify({'error': 'Учитель не найден'}), 404
-
-    teacher_id = teacher.id_teacher
 
     # Получение данных из запроса
     subject = request.form.get('subject')
@@ -4024,6 +4054,20 @@ def analyze_photos():
 
     if not subject or not class_name or not dates or not photos:
         return jsonify({'error': 'Не все данные были переданы. Проверьте форму.'}), 400
+    
+    teacher = (
+        db.session.query(Teacher)
+        .join(User, Teacher.user_id == User.id_user)
+        .filter(User.id_user == user_id)
+        .filter(Teacher.id_subject == subject)  # Добавляем фильтр по subject
+        .first()
+    )
+
+
+    if not teacher:
+        return jsonify({'error': 'Учитель не найден'}), 404
+
+    teacher_id = teacher.id_teacher
 
     # Преобразуем даты обратно из JSON
     try:
@@ -4051,17 +4095,37 @@ def analyze_photos():
         return jsonify({'error': 'Количество фотографий и дат не совпадает.'}), 400
 
     # Получение известных лиц
-    known_faces, student_ids = get_known_faces_and_ids()
+    known_faces, user_ids = get_known_faces_and_ids()
 
-    i = 0
-    for photo_path in photos:
-        recognized_students = process_class_photo(photo_path, known_faces, student_ids)
+    for i, photo_path in enumerate(photos):
+        try:
 
-        date_str = dates[i].split(": ")[-1]  # Извлекаем часть после ": "
-        date = datetime.strptime(date_str, '%Y-%m-%d')
-        record_attendance(class_name, subject, teacher_id, date, recognized_students)
+            # Распознаем студентов на фото
+            recognized_users = process_class_photo(photo_path, known_faces, user_ids)
 
-        i+=1
+            # Преобразуем id_user в ФИО
+            recognized_students = []
+            for user_id in recognized_users:
+                _, full_name = get_student_info_by_user_id(user_id)
+                recognized_students.append(full_name)
+
+            date_str = dates[i].split(": ")[-1]  # Извлекаем часть после ": "
+            date = datetime.strptime(date_str, '%Y-%m-%d')
+            record_attendance(class_name, subject, teacher_id, date, recognized_users)
+
+        # Отправляем обновление прогресса
+            socketio.emit(
+                'photo_processed',
+                {
+                    'photo_index': i + 1,
+                    'total_photos': len(photos),
+                    'recognized_students': recognized_students
+                }
+            )
+
+        except Exception as e:
+            app.logger.error(f"Ошибка при обработке фото: {e}")
+            socketio.emit('processing_error', {'error': str(e)})
 
     # Генерация таблицы
     table = generate_attendance_table(class_name, teacher_id, dates)
@@ -4095,27 +4159,63 @@ def generate_attendance_table(class_name, teacher_id, dates):
         "декабря": "Декабрь"
     }
 
-    # Получаем даты в формате {месяц: [даты]}
-    date_months = {}
+    # Словарь для перевода русских месяцев в их порядковые номера
+    MONTHS_RUS_TO_NUM = {
+        "Январь": 1,
+        "Февраль": 2,
+        "Март": 3,
+        "Апрель": 4,
+        "Май": 5,
+        "Июнь": 6,
+        "Июль": 7,
+        "Август": 8,
+        "Сентябрь": 9,
+        "Октябрь": 10,
+        "Ноябрь": 11,
+        "Декабрь": 12,
+    }
+
+    # Сортируем даты по году и месяцу
+    date_groups = defaultdict(list)
     for date_str in dates:
-        date = datetime.strptime(date_str.split(": ")[-1], '%Y-%m-%d')
-        month_name = date.strftime('%B')  # Название месяца в родительном падеже
-        if month_name not in date_months:
-            date_months[month_name] = []
-        date_months[month_name].append(date.day)
+        date = datetime.strptime(date_str.split(": ")[-1], "%Y-%m-%d")
+        month_nominative = MONTHS_NOMINATIVE[date.strftime('%B').lower()]  # Преобразуем к именительному падежу
+        date_groups[(date.year, month_nominative)].append(date.day)
+
+    # Сортируем группы по году и порядку месяца
+    date_groups = {
+        k: sorted(v)
+        for k, v in sorted(
+            date_groups.items(),
+            key=lambda x: (x[0][0], list(MONTHS_NOMINATIVE.values()).index(x[0][1]))
+        )
+    }
+
+    # Словарь для подсчета дней в каждом году
+    year_day_count = defaultdict(int)
+
+    # Подсчитываем количество дней для каждого года
+    for (year, month), days in date_groups.items():
+        year_day_count[year] += len(days)
 
     # Формируем заголовки таблицы
     columns = ["№", "Ученики"]
-    header_row = ["", ""]
+    header_row_1 = ["", ""]
+    header_row_2 = ["", ""]
+
+    for year, day_count in year_day_count.items():
+        # Добавляем год в колонки и соответствующее количество пустых ячеек
+        columns.extend([year] + [""] * (day_count - 1))
     
-    for month, days in date_months.items():
-        columns.append(MONTHS_NOMINATIVE.get(month, month.capitalize()))  # Преобразуем в именительный падеж  # Столбец с названием месяца
-        columns.extend([""] * (len(days) - 1))  # Пустые колонки для остальных дней
-        header_row.extend(days)  # Числа дней для заголовков
+    for (year, month), days in date_groups.items():
+        header_row_2.extend(days)
+        app.logger.debug(f"Месяц: {month}")
+        header_row_1.extend([month] + [""] * (len(days) - 1))
 
-
-    columns.append("Итог за период")  # Итоговый столбец
-    header_row.append("")  # Пустая колонка-разделитель
+    # Итоговая колонка
+    columns.append("Итог за период")
+    header_row_1.append("")
+    header_row_2.append("")
 
     # Получаем записи посещаемости
     attendance_records = Attendance.query.filter(
@@ -4127,18 +4227,19 @@ def generate_attendance_table(class_name, teacher_id, dates):
     attendance_map = {
         (record.id_student, record.date): record.present for record in attendance_records
     }
-    
 
     # Формируем строки для каждого ученика
-    data = [header_row]
+    data = [header_row_1, header_row_2]
     for i, student in enumerate(students, start=1):
         student_row = [i, f"{student.surname} {student.first_name}"]
         total_absent = 0
 
-        for month, days in date_months.items():
+        for (year, month), days in date_groups.items():
             for day in days:
+                # Преобразуем русский месяц в его порядковый номер
+                month_num = MONTHS_RUS_TO_NUM.get(month)
                 # Формируем дату для поиска
-                date = datetime.strptime(f"{day:02d} {month} {datetime.now().year}", "%d %B %Y").date()
+                date = datetime(year, month_num, day).date()
                 present_status = attendance_map.get((student.id_student, date), "")
                 student_row.append(present_status)
 
@@ -4151,9 +4252,6 @@ def generate_attendance_table(class_name, teacher_id, dates):
         data.append(student_row)
 
     return {"columns": columns, "data": data}
-
-
-
 
 def record_attendance(class_name, subject, teacher_id, date, recognized_students):
     """
@@ -4170,13 +4268,22 @@ def record_attendance(class_name, subject, teacher_id, date, recognized_students
 
     # Добавляем записи о посещаемости
     for student_id in absent_students:
-        attendance = Attendance(
+        # Проверяем, есть ли уже запись для данного студента, преподавателя и даты
+        existing_record = Attendance.query.filter_by(
             id_student=student_id,
             id_teacher=teacher_id,
-            present='ОТ',  # Отсутствует
             date=date
-        )
-        db.session.add(attendance)
+        ).first()
+
+        # Если запись не найдена, добавляем новую
+        if not existing_record:
+            attendance = Attendance(
+                id_student=student_id,
+                id_teacher=teacher_id,
+                present='ОТ',  # Отсутствует
+                date=date
+            )
+            db.session.add(attendance)
     db.session.commit()
 
 
@@ -4188,10 +4295,12 @@ def check_photo():
     
     photo_data = photo.read()
 
-    if not check_photo_once(photo_data):  # Ваша логика проверки
+    check, mass = check_photo_once(photo_data)
+
+    if not check:  # Ваша логика проверки
         return jsonify({'success': False, 'message': 'Лицо на фотографии не найдено. Пожалуйста, загрузите другое фото.'}), 400
 
-    return jsonify({'success': True, 'message': 'Фото успешно загружено.'}), 200
+    return jsonify({'success': True, 'message': 'Лицо на фото успешно обнаружено!'}), 200
 
 
 @app.route('/upload_photo', methods=['POST'])
@@ -4212,11 +4321,14 @@ def upload_photo():
 
     photo_data = photo.read()
 
-    if not check_photo_once(photo_data):  # Ваша логика проверки
+    check, face_encodings = check_photo_once(photo_data)
+
+    if not check or not face_encodings: 
         return jsonify({'success': False, 'message': 'Лицо на фотографии не найдено. Пожалуйста, загрузите другое фото.'}), 400
 
     # Сохраняем фото
     user.photo = photo_data
+    user.photo_embeddings = face_encodings[0].tolist()  # Сохраняем эмбеддинг в JSON-формате
     db.session.commit()
 
     return jsonify({'success': True, 'message': 'Фото успешно загружено.'}), 200
@@ -4227,4 +4339,5 @@ def upload_photo():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    eventlet.monkey_patch()  # Обязательно для совместимости
+    socketio.run(app, host='0.0.0.0', port=5000)

@@ -152,17 +152,21 @@ document.addEventListener('DOMContentLoaded', () => {
         return flashContainer;
     }
     
-    function displayFlashMessage(message) {
+    function displayFlashMessage(message, success) {
+        // Убедимся, что контейнер существует
         const flashContainer = ensureFlashContainer();
         if (flashContainer) {
+            // Добавляем класс состояния к контейнеру
+            flashContainer.className = `flash-messages ${success ? 'flash-success' : 'flash-error'}`;
             flashContainer.innerHTML = `<p>${message}</p>`;
-
-            // Через 5 секунд удаляем контейнер
+    
+            // Через 10 секунд удаляем контейнер
             setTimeout(() => {
-                flashContainer.remove();  // Полностью удаляем контейнер из DOM
-            }, 5000);  // 5000 миллисекунд = 5 секунд
+                flashContainer.remove(); // Полностью удаляем контейнер из DOM
+            }, 10000); // 10000 миллисекунд = 10 секунд
         }
     }
+    
     
 
     // Обработчик загрузки фотографий
@@ -171,18 +175,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const photoPreview = document.getElementById(previewId);
 
         if (!file) {
-            displayFlashMessage('Пожалуйста, выберите файл.');
+            displayFlashMessage('Пожалуйста, выберите файл.', false);
             return;
         }
 
         if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
-            displayFlashMessage('Недопустимый формат файла. Допустимы только JPG и PNG.');
+            displayFlashMessage('Недопустимый формат файла. Допустимы только JPG и PNG.', false);
             event.target.value = '';
             return;
         }
 
         if (file.size > 5 * 1024 * 1024) {
-            displayFlashMessage('Файл слишком большой. Максимальный размер: 5 МБ.');
+            displayFlashMessage('Файл слишком большой. Максимальный размер: 5 МБ.', false);
             event.target.value = '';
             return;
         }
@@ -197,10 +201,11 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(response => response.json())
             .then(data => {
                 if (!data.success) {
-                    displayFlashMessage(data.message); // Выводим сообщение только при ошибке
+                    displayFlashMessage(data.message, false); // Выводим сообщение только при ошибке
                     event.target.value = ''; // Очистить поле файла при ошибке
                     photoPreview.classList.add('hide'); // Скрыть изображение
                 } else {
+                    displayFlashMessage(data.message, true)
                     const reader = new FileReader();
                     reader.onload = function (readerEvent) {
                         photoPreview.src = readerEvent.target.result; // Используем readerEvent
@@ -210,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             })
             .catch(() => {
-                displayFlashMessage('Ошибка при загрузке изображения. Попробуйте снова.');
+                displayFlashMessage('Ошибка при загрузке изображения. Попробуйте снова.', false);
             });
     }
 
@@ -225,40 +230,3 @@ document.addEventListener('DOMContentLoaded', () => {
         teacherPhotoInput.addEventListener('change', (event) => handlePhotoUpload(event, 'photoPreviewTeacher', 'teacher'));
     }
 });
-
-
-
-
-
-
-
-
-// // Для учеников
-// document.getElementById('photoInputStudent').addEventListener('change', function (event) {
-//     const photoPreview = document.getElementById('photoPreviewStudent');
-//     const file = event.target.files[0];
-
-//     if (file) {
-//         const reader = new FileReader();
-//         reader.onload = function (e) {
-//             photoPreview.src = e.target.result;
-//             photoPreview.classList.remove('hide'); // Показать изображение
-//         };
-//         reader.readAsDataURL(file);
-//     }
-// });
-
-// // Для учителей
-// document.getElementById('photoInputTeacher').addEventListener('change', function (event) {
-//     const photoPreview = document.getElementById('photoPreviewTeacher');
-//     const file = event.target.files[0];
-
-//     if (file) {
-//         const reader = new FileReader();
-//         reader.onload = function (e) {
-//             photoPreview.src = e.target.result;
-//             photoPreview.classList.remove('hide'); // Показать изображение
-//         };
-//         reader.readAsDataURL(file);
-//     }
-// });

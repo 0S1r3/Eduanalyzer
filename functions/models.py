@@ -14,6 +14,7 @@ class User(db.Model):
     user_password = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(10), nullable=False)
     photo = db.Column(db.LargeBinary, nullable=True)
+    photo_embeddings = db.Column(db.JSON, nullable=True)  # Поле для эмбеддингов
 
 class Student(db.Model):
     __tablename__ = 'students'

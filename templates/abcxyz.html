@@ -31,65 +31,66 @@
         <a href="/main">Главная</a>
     </div>
 
-    <div class="container">
-        <h1>Загрузка данных учеников</h1>
-        <div class="analysis-options">
-            <select id="classSelect">
-                <option value="">Выберите класс</option>
-                <!-- Динамически заполняемые классы -->
-            </select>
-            <select id="classLetterSelect">
-                <option value="">Выберите букву класса</option>
-                <!-- Динамически заполняемые буквы классов -->
-            </select>
-            <select id="subjectSelect">
-                <option value="">Выберите предмет</option>
-                <!-- Динамически заполняемые предметы -->
-            </select>
-            <select id="teacherSelect">
-                <option value="">Выберите преподавателя</option>
-                <!-- Динамически заполняемые преподаватели -->
-            </select>
-            <select id="performanceSelect" style="display: none;">
-                <option value="grades">Успеваемость</option>
-                <option value="attendance">Посещаемость</option>
-            </select>
-            <select id="periodSelect">
-                <option value="">Выберите период</option>
-                <!-- Динамически заполняемые периоды -->
-            </select>
-            <select id="periodSelectYear">
-                <!-- Динамически заполняемые года обучения -->
-            </select>
-        </div>
-        <button onclick="loadDataABCXYZ()">Загрузить данные</button>
-    </div>    
+    <h1 style="text-align: center; font-family: Arial, sans-serif;">Загрузка данных учеников</h1>
 
-    <div class="containerForUpload">
-        <form id="uploadFormABCXYZ" action="/uploadabcxyz" method="post" enctype="multipart/form-data">
-            <div class="upload-area" id="uploadArea">
-                <img src="/static/upload.png" alt="Upload Icon" width="50">
-                <p>Перетащите файлы сюда</p>
-                <label for="fileInput" style="cursor: pointer; color: #007bff;">Выберите файл</label>
-                <input type="file" id="fileInput" style="display: none;">
+    <div class="tabs">
+        <div class="tab active" onclick="openTab(event, 'uploadStudents')">Загрузка учеников</div>
+        <div class="tab" onclick="openTab(event, 'uploadExcel')">Загрузка Excel</div>
+        <!-- <div class="tab" onclick="openTab(event, 'uploadPhotos')">Загрузка фото</div>-->
+    </div>
+    
+    <div id="uploadStudents" class="tab-content active">
+        <!-- Загрузка данных из Базы данных -->
+        <div class="container">
+            <h2>Загрузка данных учеников</h2>
+            <div class="analysis-options">
+                <select id="classSelect">
+                    <option value="">Выберите класс</option>
+                    <!-- Динамически заполняемые классы -->
+                </select>
+                <select id="classLetterSelect">
+                    <option value="">Выберите букву класса</option>
+                    <!-- Динамически заполняемые буквы классов -->
+                </select>
+                <select id="subjectSelect">
+                    <option value="">Выберите предмет</option>
+                    <!-- Динамически заполняемые предметы -->
+                </select>
+                <select id="teacherSelect">
+                    <option value="">Выберите преподавателя</option>
+                    <!-- Динамически заполняемые преподаватели -->
+                </select>
+                <select id="performanceSelect">
+                    <option value="grades">Успеваемость</option>
+                    <option value="attendance">Посещаемость</option>
+                </select>
+                <select id="periodSelect">
+                    <option value="">Выберите период</option>
+                    <!-- Динамически заполняемые периоды -->
+                </select>
+                <select id="periodSelectYear">
+                    <option value="">Выберите год обучения</option>
+                    <!-- Динамически заполняемые года обучения -->
+                </select>
             </div>
-            <button class="start-button">Загрузить файл Excel</button>
-        </form>
+            <button onclick="loadDataABCXYZ()">Загрузить данные</button>
+        </div>    
     </div>
 
-    <div class="containerForUploadPhotos">
-        <form id="photoUploadForm" action="/upload_photos" method="post" enctype="multipart/form-data">
-            <div class="photo-upload-area" id="photoUploadArea">
-                <img src="/static/upload_photo.png" alt="Upload Icon" width="50">
-                <p>Перетащите фото сюда</p>
-                <label for="photoInput" class="photo-input-label" style="cursor: pointer; color: #007bff;">Выберите фото</label>
-                <input type="file" id="photoInput" name="photos" multiple style="display: none;">
-            </div>
-            <div id="photoPreviewContainer" class="photo-preview-container">
-                <!-- Миниатюры загруженных фото будут добавлены сюда -->
-            </div>
-            <button class="upload-button" type="submit">Загрузить фото</button>
-        </form>
+    <div id="uploadExcel" class="tab-content">
+        <!-- Загрузка данных из Excel -->
+        <div class="containerForUpload">
+            <h2>Загрузка Excel</h2>
+            <form id="uploadFormABCXYZ" action="/uploadabcxyz" method="post" enctype="multipart/form-data">
+                <div class="upload-area" id="uploadArea">
+                    <img src="/static/upload.png" alt="Upload Icon" width="50">
+                    <p>Перетащите файлы сюда</p>
+                    <label for="fileInput" style="cursor: pointer; color: #007bff;">Выберите файл</label>
+                    <input type="file" id="fileInput" style="display: none;">
+                </div>
+                <button class="start-button">Загрузить файл Excel</button>
+            </form>
+        </div>
     </div>
 
     <h1 id="analysisHeader1" style="display: none;">Успеваемость учащихся</h1>
