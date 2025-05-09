@@ -1,6 +1,7 @@
 import math
 import pandas as pd
 import logging
+from functions.deleteDifCol import prune_columns
 
 # Настройка логирования
 logging.basicConfig(level=logging.DEBUG)
@@ -41,9 +42,11 @@ def analyze_ABC_XYZ(data, thresholdA, thresholdB, thresholdX, thresholdY, analys
     df['Процент'] = (df['Процент'] * 100).map('{:.2f}%'.format)
         
     #####################XYZ-анализ#################################
+    # Удаляем лишние столбцы
+    data_new = prune_columns(data, start_col, end_col,'columns2', 'data2')
 
-    table_data = data['data2']
-    columns = data['columns2']
+    table_data = data_new['data2']
+    columns = data_new['columns2']
 
     # Найти индексы указанных столбцов
     start_idx = columns.index(start_col)
@@ -53,7 +56,7 @@ def analyze_ABC_XYZ(data, thresholdA, thresholdB, thresholdX, thresholdY, analys
     measure_data = []
     for row in table_data:
         student = row[1]
-        values = [float(row[i]) for i in range(start_idx, end_idx) if row[i] != '']
+        values = [float(row[i]) for i in range(start_idx, end_idx) if row[i] != '' and float(row[i]) != 0.0]
         if values:  # Убедиться, что список не пуст
             mean_value = sum(values) / len(values)
             stddev_value = calculate_stddev(values)

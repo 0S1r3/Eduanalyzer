@@ -1,4 +1,5 @@
-from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, send_from_directory, session
+from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, send_from_directory, session, Response
+from sqlalchemy import Integer, cast, extract, func, literal
 
 from functions.models import db, User, Student, Subject, Teacher, Period, Attendance, Performance, text, flag_modified
 
@@ -21,6 +22,9 @@ from functions.analyzeXYZ import analyzeXYZ_data
 from functions.analyzeABCXYZ import analyze_ABC_XYZ
 from functions.recognizedPhoto import get_known_faces_and_ids, process_class_photo, check_photo_once, get_student_info_by_user_id
 from functions.socketio_helpers import socketio, init_socketio
+
+from functions.analyzeABCAll import analyzeABCAll
+from functions.analyzeXYZAll import analyzeXYZAll
 
 app = Flask(__name__, static_folder='static')
 app.config['SECRET_KEY'] = '24g0274r_mbg(^61*_qm89t*ss&gs4ha1b5p1)#*0fu4iu0jb('
@@ -467,6 +471,244 @@ def get_year_load():
     return jsonify(year_ranges)
 
 
+
+
+#################################Д#Л#Я#Г#Р#А#Ф#И#К#О#В###################################################################################################
+
+@app.route('/api/students', methods=['GET'])
+def get_students():
+    """
+    Возвращает список студентов с учётом фильтров:
+    — teacher_id
+    — subject_id
+    — period_id
+    — class_number
+    — class_letter
+    — performance: 'grades' или иначе (attendance)
+    — selected_year: диапазон 'YYYY-YYYY'
+    """
+    teacher_id    = request.args.get('teacher_id')
+    subject_id    = request.args.get('subject_id')
+    period_id     = request.args.get('period_id')
+    class_number  = request.args.get('class_number')
+    class_letter  = request.args.get('class_letter')
+    perf          = request.args.get('performance')
+    year_range    = request.args.get('selected_year')
+
+    # Разбираем год, если указан
+    if year_range:
+        start_year, end_year = map(int, year_range.split('-'))
+
+    # Базовый запрос по Student
+    students_q = Student.query
+
+    # В зависимости от типа анализа джойним к Performance или Attendance
+    if perf == 'grades':
+        # джойн с оценками
+        if teacher_id or subject_id or period_id or class_number or class_letter or year_range:
+            students_q = students_q.join(Performance, Performance.id_student == Student.id_student, isouter=True)
+            students_q = students_q.join(Teacher,    Teacher.id_teacher    == Performance.id_teacher,  isouter=True)
+        # фильтры
+        if teacher_id:
+            students_q = students_q.filter(Performance.id_teacher == teacher_id)
+        if subject_id:
+            students_q = students_q.filter(Teacher.id_subject == subject_id)
+        if period_id:
+            students_q = students_q.filter(Performance.id_period   == period_id)
+        if class_number:
+            students_q = students_q.filter(Student.class_number     == class_number)
+        if class_letter:
+            students_q = students_q.filter(Student.class_letter     == class_letter)
+        if year_range:
+            students_q = students_q.filter(
+                db.extract('year', Performance.date) >= start_year,
+                db.extract('year', Performance.date) <= end_year
+            )
+    else:
+        # джойн с посещаемостью
+        if teacher_id or subject_id or period_id or class_number or class_letter or year_range:
+            students_q = students_q.join(Attendance, Attendance.id_student == Student.id_student, isouter=True)
+            students_q = students_q.join(Teacher,    Teacher.id_teacher    == Attendance.id_teacher, isouter=True)
+        # фильтры
+        if teacher_id:
+            students_q = students_q.filter(Attendance.id_teacher == teacher_id)
+        if subject_id:
+            students_q = students_q.filter(Teacher.id_subject      == subject_id)
+        if period_id:
+            students_q = students_q.filter(Attendance.id_period    == period_id)
+        if class_number:
+            students_q = students_q.filter(Student.class_number     == class_number)
+        if class_letter:
+            students_q = students_q.filter(Student.class_letter     == class_letter)
+        if year_range:
+            students_q = students_q.filter(
+                db.extract('year', Attendance.date) >= start_year,
+                db.extract('year', Attendance.date) <= end_year
+            )
+
+    # Убираем дубликаты (distinct)
+    students_q = students_q.distinct()
+
+    # Выполняем запрос
+    students = students_q.all()
+
+    # Возвращаем JSON
+    return jsonify([
+        {
+            'id':         s.id_student,
+            'full_name': f"{s.surname} {s.first_name} {s.patronymic or ''}".strip(),
+            'class_number': s.class_number,
+            'class_letter': s.class_letter
+        }
+        for s in students
+    ])
+
+
+
+
+
+PERIOD_LABELS = {
+    1: 'Q1', 2: 'Q2', 3: 'Q3', 4: 'Q4',
+    5: 'Year', 6: 'Final',
+    7: 'H1', 8: 'H2'
+}
+
+def parse_year_range(year_range: str):
+    start, end = map(int, year_range.split('-'))
+    return f'{start}-09-01', f'{end}-06-01'
+
+@app.route('/api/data_request', methods=['GET'])
+def get_chart_data():
+    # thresholds: {"A":0.7,"B":0.2,"C":0.1}
+    # 1) Базовые параметры
+    sel_id      = request.args.get('student_id', type=int)
+    teacher_id  = request.args.get('teacher_id', type=int)
+    analysis    = request.args.get('analysis', default='grades')
+    year_range  = request.args.get('year_range')
+    period_type = request.args.get('period_type', default='quarter')
+    thresholds_raw = request.args.get('thresholds', default='{}')  
+    try:
+        thresholds = json.loads(thresholds_raw)
+    except json.JSONDecodeError:
+        # на случай некорректного JSON
+        thresholds = {}
+
+    # подставляем дефолты, если ключей нет
+    tresholdA = thresholds.get('A', 0.7)
+    tresholdB = thresholds.get('B', 0.2)
+    tresholdC = thresholds.get('C', 0.1)
+    tresholdX = thresholds.get('X', 10.0)
+    tresholdY = thresholds.get('Y', 25.0)
+    tresholdZ = thresholds.get('Z', 65.0)
+
+    typeAnalyze = request.args.get('type_analyze', default='abc')
+
+    if not (sel_id and teacher_id and year_range):
+        return jsonify({'error': 'student_id, teacher_id и year_range обязательны'}), 400
+
+    # 2) Получаем диапазон дат
+    date_from, date_to = parse_year_range(year_range)
+
+    # 3) Узнаём класс выбранного ученика
+    sel = Student.query.get_or_404(sel_id)
+    cls_num, cls_let = sel.class_number, sel.class_letter
+
+    # 4) Собираем список всех учеников этого класса
+    classmates = Student.query.filter_by(
+        class_number=cls_num,
+        class_letter=cls_let
+    ).all()
+
+    # 5) Для каждого ученика формируем свою серию
+    series = []
+    for student in classmates:
+        sid = student.id_student
+
+        # выбираем модель и поле
+        if analysis == 'grades':
+            Model = Performance
+            val = Performance.grade
+        else:
+            Model = Attendance
+            val = func.coalesce(Attendance.final_attendance, literal(1))
+
+        # строим запрос в зависимости от period_type
+        if period_type == 'month':
+            q = (
+                db.session.query(
+                    extract('year',  Model.date).label('year'),
+                    extract('month', Model.date).label('month'),
+                    func.avg(val).label('value')
+                )
+                .filter(
+                    Model.id_student == sid,
+                    Model.id_teacher == teacher_id,
+                    Model.date >= date_from,
+                    Model.date <  date_to
+                )
+                .group_by('year','month')
+                .order_by('year','month')
+            )
+            rows = q.all()
+            labels = [f"{int(r.year)}-{int(r.month):02d}" for r in rows]
+            # округляем среднее до двух знаков после запятой
+            values = [round(float(r.value), 2) for r in rows]
+
+        else:  # кварталы / полугодия / год
+            q = (
+                db.session.query(
+                    Model.id_period,
+                    val.label('value')
+                )
+                .filter(
+                    Model.id_student == sid,
+                    Model.id_teacher == teacher_id,
+                    Model.date >= date_from,
+                    Model.date <  date_to
+                )
+                .order_by(Model.id_period)
+            )
+            rows = q.all()
+
+            app.logger.info(f"Полученные строки: {[(r.id_period, r.value) for r in rows]}")
+
+            labels, values = zip(*[
+                (PERIOD_LABELS[r.id_period], float(r.value))
+                for r in rows
+                if r.id_period in PERIOD_LABELS
+            ])
+            labels, values = list(labels), list(values)
+
+        # добавляем серию
+        fio = f"{student.surname} {student.first_name} {student.patronymic or ''}".strip()
+        series.append({
+            'student_id': sid,
+            'student_fio': fio,
+            'labels': labels,
+            'values': values
+        })
+
+
+    if typeAnalyze == 'abc':
+        # 6) Анализ ABC
+        result = analyzeABCAll(series, tresholdA, tresholdB, analysis)
+    elif typeAnalyze == 'xyz':
+        # 6) Анализ XYZ
+        result = analyzeXYZAll(series, tresholdX, tresholdY, tresholdZ)
+    
+    app.logger.info(f"Результат анализа: {result}")
+
+
+    # return jsonify(result)
+    return Response(
+        json.dumps(result, ensure_ascii=False),
+        mimetype='application/json'
+    )
+
+
+
+##############################################################################################################################################
+
 ###############################################################################################
 
 ###############################Получение данных из БД##########################################ПРОВЕРИТЬ ЗАГРУЗКУ ПОСЕЩЕНИЯ, ПО МЕСЯЦАМ КОТОРОЕ С ОДИНАКОВЫМИ ДНЯМИ##
@@ -717,7 +959,17 @@ def load_data():
         # Объединяем заголовок с отсортированными данными
         data = [data[0]] + data_sorted
 
-        return jsonify({'columns': column, 'data': data})
+        # Собираем параметры в отдельный словарь
+        params = {
+            'classNumber':     class_select,
+            'classLetter':     class_letter,
+            'subjectId':          subject_id,
+            'teacherId':          teacher_id,
+            'analysis': performance_type,
+            'year':      period_year,
+        }
+
+        return jsonify({'columns': column, 'data': data, 'params': params})
 
     else:
         start_month = '9'
@@ -979,7 +1231,17 @@ def load_data():
             # Объединяем заголовок с отсортированными данными
             data = [data[0]] + data_sorted
 
-            return jsonify({'columns': column, 'data': data})
+            # Собираем параметры в отдельный словарь
+            params = {
+                'classNumber':     class_select,
+                'classLetter':     class_letter,
+                'subjectId':          subject_id,
+                'teacherId':          teacher_id,
+                'analysis': performance_type,
+                'year':      period_year,
+            }
+
+            return jsonify({'columns': column, 'data': data, 'params': params})
             
         else:
             if class_letter is None:
@@ -1199,7 +1461,17 @@ def load_data():
             # Объединяем заголовок с отсортированными данными
             data = [data[0]] + data_sorted
 
-            return jsonify({'columns': column, 'data': data})
+            # Собираем параметры в отдельный словарь
+            params = {
+                'classNumber':     class_select,
+                'classLetter':     class_letter,
+                'subjectId':          subject_id,
+                'teacherId':          teacher_id,
+                'analysis': performance_type,
+                'year':      period_year,
+            }
+
+            return jsonify({'columns': column, 'data': data, 'params': params})
 
 
 
@@ -1302,9 +1574,6 @@ def abc_page():
 
     # Ищем пользователя в базе
     user = User.query.filter_by(id_user=session['user_id']).first()
-    # if not user or user.role != 'teacher':
-    #     flash('Только учителя могут загружать фотографии.')
-    #     return redirect(url_for('dashboard'))
 
     # Получаем информацию о текущем учителе
     teacher = Teacher.query.filter_by(user_id=user.id_user).first()
@@ -1334,9 +1603,6 @@ def xyz_page():
 
     # Ищем пользователя в базе
     user = User.query.filter_by(id_user=session['user_id']).first()
-    # if not user or user.role != 'teacher':
-    #     flash('Только учителя могут загружать фотографии.')
-    #     return redirect(url_for('dashboard'))
 
     # Получаем информацию о текущем учителе
     teacher = Teacher.query.filter_by(user_id=user.id_user).first()
@@ -2013,9 +2279,24 @@ def upload():
                 
                         # Сохраняем изменения в базе данных
                         db.session.commit()
-            
+    
+    if (performance == 'Посещаемость'):
+        performance_type = 'attendance'
+    else:
+        performance_type = 'grades'
 
-    return jsonify({'columns': columns, 'data': data})
+
+    # Собираем параметры в отдельный словарь
+    params = {
+        'classNumber':     int(class_number),
+        'classLetter':     letter,
+        'subjectId':       subject_id,
+        'teacherId':       teacher_id,
+        'analysis': performance_type,
+        'year':      start_year + '-' + end_year,
+    }        
+
+    return jsonify({'columns': columns, 'data': data, 'params': params})
 
     ######################ABC/XYZ-анализ##########################################
 
@@ -3925,6 +4206,10 @@ def register():
             user = User(user_login=username, user_password=hashed_password, role=role, photo=photo_data, photo_embeddings=face_encodings[0].tolist())
             db.session.add(user)
         else:
+            if role == 'student':
+                if photo_data == None:
+                    flash("Необходимо загрузить фото")
+                    return redirect(url_for('register'))
             # Создаем запись пользователя
             user = User(user_login=username, user_password=hashed_password, role=role, photo=photo_data)
             db.session.add(user)
@@ -4094,14 +4379,17 @@ def analyze_photos():
     if len(dates) != len(photos):
         return jsonify({'error': 'Количество фотографий и дат не совпадает.'}), 400
 
+    # Извлекаем номер класса и букву
+    class_number, class_letter = class_name.split()
+
     # Получение известных лиц
-    known_faces, user_ids = get_known_faces_and_ids()
+    known_faces, user_ids = get_known_faces_and_ids(class_number, class_letter)
 
     for i, photo_path in enumerate(photos):
         try:
 
             # Распознаем студентов на фото
-            recognized_users = process_class_photo(photo_path, known_faces, user_ids)
+            recognized_users = process_class_photo(photo_path, known_faces, user_ids, app)
 
             # Преобразуем id_user в ФИО
             recognized_students = []

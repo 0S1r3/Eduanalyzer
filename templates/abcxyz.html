@@ -9,9 +9,46 @@
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script src="js/scripts.js" defer></script>
+
+    <!-- Socket.io JS-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.min.js"></script>
+    <!-- Sortable JS-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ru.js"></script>
+
+    <!-- ECharts + ECharts-GL для 3D -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts-gl@2/dist/echarts-gl.min.js"></script>
+
+
+    <!-- DataTables core -->
+    <link rel="stylesheet" 
+    href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+
+    <!-- Buttons extension -->
+    <link rel="stylesheet" 
+    href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css">
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+
+    <!-- Зависимости для HTML5-экспорта -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+
+    <!-- Собственно кнопки экспорта -->
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+
+    <script src="js/scripts.js" defer type="module"></script>
     <script src="js/abcxyz.js" defer></script>
     <script src="js/profile.js" defer></script>
+
+
     <title>ABC/XYZ-анализ успеваемости и посещаемости</title>
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
 </head>
@@ -19,7 +56,7 @@
     <div class="header">
         <div class="profile-container">
             <div class="profile-icon" id="profileIcon">
-                <img id="userPhoto" src="/static/profile.png" alt="Профиль" />
+                <img id="userPhoto" alt="Профиль" />
             </div>
             <div class="profile-dropdown" id="profileDropdown">
                 <a href="{{ url_for('profile') }}" class="dropdown-button">Профиль</a>
@@ -34,7 +71,7 @@
     <h1 style="text-align: center; font-family: Arial, sans-serif;">Загрузка данных учеников</h1>
 
     <div class="tabs">
-        <div class="tab active" onclick="openTab(event, 'uploadStudents')">Загрузка учеников</div>
+        <div class="tab active" onclick="openTab(event, 'uploadStudents')">Загрузка списка учеников</div>
         <div class="tab" onclick="openTab(event, 'uploadExcel')">Загрузка Excel</div>
         <!-- <div class="tab" onclick="openTab(event, 'uploadPhotos')">Загрузка фото</div>-->
     </div>
@@ -43,37 +80,51 @@
         <!-- Загрузка данных из Базы данных -->
         <div class="container">
             <h2>Загрузка данных учеников</h2>
-            <div class="analysis-options">
-                <select id="classSelect">
-                    <option value="">Выберите класс</option>
-                    <!-- Динамически заполняемые классы -->
-                </select>
-                <select id="classLetterSelect">
-                    <option value="">Выберите букву класса</option>
-                    <!-- Динамически заполняемые буквы классов -->
-                </select>
-                <select id="subjectSelect">
-                    <option value="">Выберите предмет</option>
-                    <!-- Динамически заполняемые предметы -->
-                </select>
-                <select id="teacherSelect">
-                    <option value="">Выберите преподавателя</option>
-                    <!-- Динамически заполняемые преподаватели -->
-                </select>
-                <select id="performanceSelect">
-                    <option value="grades">Успеваемость</option>
-                    <option value="attendance">Посещаемость</option>
-                </select>
-                <select id="periodSelect">
-                    <option value="">Выберите период</option>
-                    <!-- Динамически заполняемые периоды -->
-                </select>
-                <select id="periodSelectYear">
-                    <option value="">Выберите год обучения</option>
-                    <!-- Динамически заполняемые года обучения -->
-                </select>
-            </div>
-            <button onclick="loadDataABCXYZ()">Загрузить данные</button>
+            <form id="filter-form-no-selector-graph">
+                <div class="filter-row">
+                    <select id="classSelect">
+                        <option value="">Выберите класс</option>
+                        <!-- Динамически заполняемые классы -->
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <select id="classLetterSelect">
+                        <option value="">Выберите букву класса</option>
+                        <!-- Динамически заполняемые буквы классов -->
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <select id="subjectSelect">
+                        <option value="">Выберите предмет</option>
+                        <!-- Динамически заполняемые предметы -->
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <select id="teacherSelect">
+                        <option value="">Выберите преподавателя</option>
+                        <!-- Динамически заполняемые преподаватели -->
+                    </select>
+                </div>
+                <div class="filter-row" style="display: none;">
+                    <select id="performanceSelect">
+                        <option value="grades">Успеваемость</option>
+                        <option value="attendance">Посещаемость</option>
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <select id="periodSelect">
+                        <option value="">Выберите период</option>
+                        <!-- Динамически заполняемые периоды -->
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <select id="periodSelectYear">
+                        <option value="">Выберите год обучения</option>
+                        <!-- Динамически заполняемые года обучения -->
+                    </select>
+                </div>
+                <button type="button" onclick="loadDataABCXYZ()">Загрузить данные</button>
+            </form>
         </div>    
     </div>
 
@@ -220,19 +271,74 @@
     
 
     <h1 id="analysisHeader" style="display: none;">XYZ/ABC-анализ успеваемости и посещаемости</h1>
-    <div class="containerTable1" style="display: none;">
-        <table id="resTable">
-            <thead>
+    <div class="container-centered">
+        <!-- Карточки-метрики -->
+        <div id="metricsCards" class="metrics-cards" style="display:none;">
+            <div class="card">
+                <div class="card-title">Всего учеников</div>
+                <div class="card-value" id="totalCount">–</div>
+            </div>
+            <div class="card" style="background-color: #00ff00;">
+                <div class="card-title">Категория AX</div>
+                <div class="card-value" id="countAX">–</div>
+            </div>
+            <div class="card" style="background-color: #99ff00;">
+                <div class="card-title">Категория AY</div>
+                <div class="card-value" id="countAY">–</div>
+            </div>
+            <div class="card" style="background-color: #cfff5f;">
+                <div class="card-title">Категория AZ</div>
+                <div class="card-value" id="countAZ">–</div>
+            </div>
+            <div class="card" style="background-color: #ffff00;">
+                <div class="card-title">Категория BX</div>
+                <div class="card-value" id="countBX">–</div>
+            </div>
+            <div class="card" style="background-color: #ffe344;">
+                <div class="card-title">Категория BY</div>
+                <div class="card-value" id="countBY">–</div>
+            </div>
+            <div class="card" style="background-color: #ffb700;">
+                <div class="card-title">Категория BZ</div>
+                <div class="card-value" id="countBZ">–</div>
+            </div>
+            <div class="card" style="background-color: #ff4800;">
+                <div class="card-title">Категория CX</div>
+                <div class="card-value" id="countCX">–</div>
+            </div>
+            <div class="card" style="background-color: #ff5731;">
+                <div class="card-title">Категория CY</div>
+                <div class="card-value" id="countCY">–</div>
+            </div>
+            <div class="card" style="background-color: #ff0000;">
+                <div class="card-title">Категория CZ</div>
+                <div class="card-value" id="countCZ">–</div>
+            </div>
+        </div>
 
-            </thead>
-            <tbody>
-                <!-- Результаты ABC/XYZ-анализа будут отображены здесь -->
-            </tbody>
-        </table>
-    </div>
+        <!-- 2. Таблица результатов -->
+        <details open style="display:none;">
+            <summary>Таблица XYZ-анализа</summary>
+            <div style="overflow-x:auto;">
+            <table id="resTable" class="styled-table" style="width:100%;">
+                <thead></thead>
+                <tbody></tbody>
+            </table>
+            </div>
+        </details>
 
-    <div class="containerTable1" style="display: none;">
-        <div id="chart_div" style="width: 100%; height: 700px;"></div>
+        <!-- 3. Scater -->
+        <details open style="display:none;">
+            <summary>Распределение учеников по оценкам и пропускам</summary>
+            <div id="chart_div" style="width:100%; height:700px;"></div>
+        </details>
+        
+        <!-- Круговая диаграмма -->
+        <details open style="display:none;">
+            <summary>Соотношение учащихся по группам</summary>
+            <div id="chart_pie3d" style="width:100%; height:700px;"></div>
+        </details>          
+        
     </div>
 
     <div id="recommendations" style="display: none;">

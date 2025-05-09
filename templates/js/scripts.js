@@ -1,3 +1,21 @@
+google.charts.load('current', { packages: ['corechart','bar'] });
+
+import {
+    setClassNumber, setClassLetter,
+    setSubjectId, setTeacherId,
+    setAnalysis, setYear,
+    getAll, getClassNumber, getClassLetter,
+    getSubjectId, getTeacherId,
+    getAnalysis, getYear, getThresholdA,
+    getThresholdB, getThresholdC,
+    setThresholdA, setThresholdB, setThresholdC,
+    getThresholdX, getThresholdY, getThresholdZ,
+    setThresholdX, setThresholdY, setThresholdZ,
+    getTypeAnalyze, setTypeAnalyze
+  } from './store.js';
+
+//////////////////////Ш////А////П/////К/////А/////С///В////Е///Р////Х///У//////////////////////////////////////////////////////
+
 const uploadArea = document.getElementById('uploadArea');
 const fileInput = document.getElementById('fileInput');
 const fileInputLabel = document.querySelector('#uploadArea label');
@@ -69,131 +87,23 @@ function loadData() {
         success: function (response) {
             updateTable(response);
             updateAnalysisType(response);
-            //updateAnalysisMeasure(response);
-            //updatePeriodOptions(response);
 
-            // Очистка текущих опций в метрике
-            var analysisMeasure = $('#analysisMeasure');
-            analysisMeasure.empty(); // Очистка всех опций
+            // Добавляем метрики для анализов
+            measuresAdd(response);
 
-            // Функция для добавления опции в селект
-            function addOption(value, text) {
-                analysisMeasure.append(`<option value="${value}">${text}</option>`);
+            // Обновляем хранилище данных
+            const p = response.params;
+
+            try {
+              setClassNumber( +p.classNumber );  // number
+              setClassLetter( p.classLetter );  // string
+              setSubjectId(    p.subjectId );   // integer
+              setTeacherId(    p.teacherId );   // integer
+              setAnalysis(     p.analysis );    // string
+              setYear(         p.year );        // string "YYYY-YYYY"
+            } catch (err) {
+              console.error("Ошибка при установке параметров в store:", err);
             }
-
-            // Условия для добавления опций на основе загруженных данных
-            var containsAttendanceDays = response.columns.includes('Дни посещаемости'); // Пример условия для посещаемости
-            var containsPeriodTotal = response.columns.includes('Итог за период');
-            var contains1 = response.data[0].includes('1 четверть');
-            var contains2 = response.data[0].includes('2 четверть');
-            var contains3 = response.data[0].includes('3 четверть');
-            var contains4 = response.data[0].includes('4 четверть');
-            var containsAverageGrade = response.columns.includes('Средний балл');
-            var containsAllGrade = response.columns.includes('Год');
-            var containsMedium1 = response.columns.includes('1 полугодие');
-            var containsMedium2 = response.columns.includes('2 полугодие');
-            var containsYearTotal = response.columns.includes('Итог.');
-            var containsPeriodGrade = response.columns.includes('Оценка за период');
-
-            // Проверка условий и добавление соответствующих опций
-            if (containsAttendanceDays) {
-                addOption('attendanceDays', 'Посещаемость');
-            }
-
-            if (containsPeriodTotal) {
-                addOption('periodTotal', 'Итог за период');
-            }
-
-            if (contains1) {
-                addOption('quarter1', '1 четверть');
-            }
-            if (contains2) {
-                addOption('quarter2', '2 четверть');
-            }
-            if (contains3) {
-                addOption('quarter3', '3 четверть');
-            }
-            if (contains4) {
-                addOption('quarter4', '4 четверть');
-            }
-
-            if (containsAverageGrade) {
-                addOption('averageGrade', 'Средний балл');
-            }
-
-            if (containsAllGrade) {
-                addOption('year', 'Год');
-            }
-
-            if (containsMedium1) {
-                addOption('medium1', '1 полугодие');
-            }
-            if (containsMedium2) {
-                addOption('medium2', '2 полугодие');
-            }
-
-            if (containsYearTotal) {
-                addOption('yearTotal', 'Итог.');
-            }
-
-            if (containsPeriodGrade) {
-                addOption('gradePeriod', 'Оценка за период');
-            }
-
-            // Применить первую доступную опцию
-            analysisMeasure.find('option:first').prop('selected', true);
-            
-
-
-            // Для XYZ-анализа
-            // Функция для очистки всех опций в селекторе
-            function clearOptions(selector) {
-                var select = $(selector);
-                select.empty();  // Очистка всех текущих опций
-            }
-
-            // Условия для начального и конечного периода
-            var quarterConditions = [contains1, contains2, contains3, contains4];
-            var quarterOptions = ['Q1', 'Q2', 'Q3', 'Q4'];
-            var mediumConditions = [containsMedium1, containsMedium2];
-            var mediumOptions = ['H1', 'H2'];
-            var finalOption = 'I';
-
-            // Функция для добавления опций в селектор
-            function addPeriodOptions(selector, quarterConditions, quarterOptions, mediumConditions, mediumOptions, containsPeriodTotal, finalOption) {
-                var select = $(selector);
-                
-                // Очистка существующих опций
-                clearOptions(selector);
-                
-                // Добавляем опции для четвертей
-                quarterConditions.forEach((condition, index) => {
-                    if (condition) {
-                        select.append(`<option value="${quarterOptions[index]}">${index + 1} четверть</option>`);
-                    }
-                });
-
-                // Добавляем опции для полугодий
-                mediumConditions.forEach((condition, index) => {
-                    if (condition) {
-                        select.append(`<option value="${mediumOptions[index]}">${index + 1} полугодие</option>`);
-                    }
-                });
-
-                // Добавляем итоговый период (если есть)
-                if (containsPeriodTotal) {
-                    select.append(`<option value="${finalOption}">Итог за период</option>`);
-                }
-
-                // Применить первую доступную опцию
-                select.find('option:first').prop('selected', true);
-            }
-
-            // Управление опциями для начального периода
-            addPeriodOptions('#startQuarter', quarterConditions, quarterOptions, mediumConditions, mediumOptions,containsPeriodTotal, finalOption);
-
-            // Управление опциями для конечного периода
-            addPeriodOptions('#endQuarter', quarterConditions, quarterOptions, mediumConditions, mediumOptions,containsPeriodTotal, finalOption);
 
             $('.containerTable').css('display', 'table');
         },
@@ -202,6 +112,8 @@ function loadData() {
         }
     });
 }
+// «Пробрасываем» в глобальный scope
+window.loadData = loadData;
 
 // Функция для обновления таблицы
 function updateTable(response) {
@@ -296,47 +208,6 @@ function updateAnalysisType(response) {
     }
 }
 
-// Функция для обновления меры анализа
-function updateAnalysisMeasure(response) {
-    const analysisMeasure = $('#analysisMeasure');
-    const data = response.data[0];
-    const conditions = {
-        attendanceDays: response.columns.includes('Дни посещения'),
-        periodTotal: response.columns.includes('Итог за период'),
-        averageGrade: response.columns.includes('Средняя оценка'),
-        year: response.columns.includes('Год'),
-        medium1: response.columns.includes('1 полугодие'),
-        medium2: response.columns.includes('2 полугодие'),
-        yearTotal: response.columns.includes('Итог.'),
-        gradePeriod: response.columns.includes('Оценка за период')
-    };
-
-    analysisMeasure.find('option').each((_, option) => {
-        const value = $(option).val();
-        $(option).prop('disabled', !conditions[value]);
-    });
-
-    analysisMeasure.find('option:disabled').hide();
-    analysisMeasure.find('option:not(:disabled)').first().prop('selected', true);
-}
-
-// Функция для управления опциями периодов
-function updatePeriodOptions(response) {
-    const periods = {
-        Q1: response.data[0].includes('1 четверть'),
-        Q2: response.data[0].includes('2 четверть'),
-        Q3: response.data[0].includes('3 четверть'),
-        Q4: response.data[0].includes('4 четверть'),
-        H1: response.columns.includes('1 полугодие'),
-        H2: response.columns.includes('2 полугодие'),
-        I: response.columns.includes('Итог за период')
-    };
-
-    ['#startQuarter', '#endQuarter'].forEach(selector => {
-        manageOptions(selector, periods);
-    });
-}
-
 // Функция для управления опциями в выпадающем списке
 function manageOptions(selector, options) {
     const select = $(selector);
@@ -352,7 +223,7 @@ function manageOptions(selector, options) {
     select.find('option:not(:disabled)').first().prop('selected', true);
 }
 
-// Табличное заполнение
+// Табличное заполнение с помощью файла Excel
 $(document).ready(function () {
     $('#uploadForm').on('submit', function (e) {
         e.preventDefault();
@@ -471,128 +342,22 @@ $(document).ready(function () {
                     alert('Ошибка: данные не соответствуют образцу загрузки.');
                 }
 
-                // Очистка текущих опций в метрике
-                var analysisMeasure = $('#analysisMeasure');
-                analysisMeasure.empty(); // Очистка всех опций
+                // Добавляем метрики для анализов
+                measuresAdd(response);
 
-                // Функция для добавления опции в селект
-                function addOption(value, text) {
-                    analysisMeasure.append(`<option value="${value}">${text}</option>`);
+                // Обновляем хранилище данных
+                const p = response.params;
+
+                try {
+                    setClassNumber( +p.classNumber );  // number
+                    setClassLetter( p.classLetter );  // string
+                    setSubjectId(    p.subjectId );   // integer
+                    setTeacherId(    p.teacherId );   // integer
+                    setAnalysis(     p.analysis );    // string
+                    setYear(         p.year );        // string "YYYY-YYYY"
+                } catch (err) {
+                    console.error("Ошибка при установке параметров в store:", err);
                 }
-
-                // Условия для добавления опций на основе загруженных данных
-                var containsAttendanceDays = response.columns.includes('Дни посещаемости'); // Пример условия для посещаемости
-                var containsPeriodTotal = response.columns.includes('Итог за период');
-                var contains1 = response.data[0].includes('1 четверть');
-                var contains2 = response.data[0].includes('2 четверть');
-                var contains3 = response.data[0].includes('3 четверть');
-                var contains4 = response.data[0].includes('4 четверть');
-                var containsAverageGrade = response.columns.includes('Средний балл');
-                var containsAllGrade = response.columns.includes('Год');
-                var containsMedium1 = response.columns.includes('1 полугодие');
-                var containsMedium2 = response.columns.includes('2 полугодие');
-                var containsYearTotal = response.columns.includes('Итог.');
-                var containsPeriodGrade = response.columns.includes('Оценка за период');
-
-                // Проверка условий и добавление соответствующих опций
-                if (containsAttendanceDays) {
-                    addOption('attendanceDays', 'Посещаемость');
-                }
-
-                if (containsPeriodTotal) {
-                    addOption('periodTotal', 'Итог за период');
-                }
-
-                if (contains1) {
-                    addOption('quarter1', '1 четверть');
-                }
-                if (contains2) {
-                    addOption('quarter2', '2 четверть');
-                }
-                if (contains3) {
-                    addOption('quarter3', '3 четверть');
-                }
-                if (contains4) {
-                    addOption('quarter4', '4 четверть');
-                }
-
-                if (containsAverageGrade) {
-                    addOption('averageGrade', 'Средний балл');
-                }
-
-                if (containsAllGrade) {
-                    addOption('year', 'Год');
-                }
-
-                if (containsMedium1) {
-                    addOption('medium1', '1 полугодие');
-                }
-                if (containsMedium2) {
-                    addOption('medium2', '2 полугодие');
-                }
-
-                if (containsYearTotal) {
-                    addOption('yearTotal', 'Итог');
-                }
-
-                if (containsPeriodGrade) {
-                    addOption('gradePeriod', 'Оценка за период');
-                }
-
-                // Применить первую доступную опцию
-                analysisMeasure.find('option:first').prop('selected', true);
-                
-
-
-                // Для XYZ-анализа
-                // Функция для очистки всех опций в селекторе
-                function clearOptions(selector) {
-                    var select = $(selector);
-                    select.empty();  // Очистка всех текущих опций
-                }
-
-                // Условия для начального и конечного периода
-                var quarterConditions = [contains1, contains2, contains3, contains4];
-                var quarterOptions = ['Q1', 'Q2', 'Q3', 'Q4'];
-                var mediumConditions = [containsMedium1, containsMedium2];
-                var mediumOptions = ['H1', 'H2'];
-                var finalOption = 'I';
-
-                // Функция для добавления опций в селектор
-                function addPeriodOptions(selector, quarterConditions, quarterOptions, mediumConditions, mediumOptions, containsPeriodTotal, finalOption) {
-                    var select = $(selector);
-                    
-                    // Очистка существующих опций
-                    clearOptions(selector);
-                    
-                    // Добавляем опции для четвертей
-                    quarterConditions.forEach((condition, index) => {
-                        if (condition) {
-                            select.append(`<option value="${quarterOptions[index]}">${index + 1} четверть</option>`);
-                        }
-                    });
-
-                    // Добавляем опции для полугодий
-                    mediumConditions.forEach((condition, index) => {
-                        if (condition) {
-                            select.append(`<option value="${mediumOptions[index]}">${index + 1} полугодие</option>`);
-                        }
-                    });
-
-                    // Добавляем итоговый период (если есть)
-                    if (containsPeriodTotal) {
-                        select.append(`<option value="${finalOption}">Итог за период</option>`);
-                    }
-
-                    // Применить первую доступную опцию
-                    select.find('option:first').prop('selected', true);
-                }
-
-                // Управление опциями для начального периода
-                addPeriodOptions('#startQuarter', quarterConditions, quarterOptions, mediumConditions, mediumOptions,containsPeriodTotal, finalOption);
-
-                // Управление опциями для конечного периода
-                addPeriodOptions('#endQuarter', quarterConditions, quarterOptions, mediumConditions, mediumOptions,containsPeriodTotal, finalOption);
 
                 $('.containerTable').css('display', 'table');
             
@@ -658,6 +423,8 @@ function updateThresholdValue(sliderId, valueDisplayId) {
     }
 }
 
+window.updateThresholdValue = updateThresholdValue
+
 // Получаем все элементы ползунков
 var sliders = document.querySelectorAll('.slider-container input[type="range"]');
 
@@ -684,8 +451,6 @@ function setInitialLineStyle(slider) {
     // Устанавливаем начальный стиль линии
     slider.style.background = 'linear-gradient(to right, #000000 ' + value + '%, #767676 ' + value + '%)';
 }
-
-
 
 
 
@@ -1137,33 +902,27 @@ document.addEventListener('DOMContentLoaded', function () {
     loadYears();
 });
 
+function parceForAnalysis(){
+    var tableData = [];
+    var columnHeaders = [];
 
-// ABC-анализ
-function analyzeABCData() {
-    function checkLearningPeriods(selector) {
-        var theadRows = $(selector).closest('thead').find('tr');
-        var hasLearningPeriods = false;
-    
-        theadRows.each(function () {
-            if ($(this).text().includes("Учебные периоды")) {
-                hasLearningPeriods = true;
-            }
-        });
-    
-        return hasLearningPeriods;
+    // 1) Проверяет, есть ли строка с текстом "Учебные периоды" ровно в шапке нашей таблицы
+    function checkLearningPeriods() {
+        return $('#studentTable thead tr')
+        .toArray()
+        .some(tr => $(tr).text().includes("Учебные периоды"));
     }
-
     
-    function checkTheadRowCount(selector, expectedCount = 2) {
-        var theadRows = $(selector).closest('thead').find('tr');
-        return theadRows.length === expectedCount;
+    // 2) Проверяет, что в шапке нашей таблицы ровно expectedCount строк
+    function checkTheadRowCount(expectedCount = 2) {
+        return $('#studentTable thead tr').length === expectedCount;
     }
+    
+    // 3) Логируем отдельно, чтобы убедиться:
+    console.log("hasLearningPeriods:", checkLearningPeriods());
+    console.log("theadRowCount:",      $('#studentTable thead tr').length);
 
-    if (!checkLearningPeriods("thead th") || !checkTheadRowCount("thead th", 2)){
-        var tableData = [];
-        var columns = [];
-        var monthCol = [];
-        
+    if (!checkLearningPeriods() || !checkTheadRowCount(2)){
         function processHeaders(selector, indexOffset = 0) {
             var result = [];
             $(selector).each(function () {
@@ -1175,58 +934,250 @@ function analyzeABCData() {
             });
             return result;
         }
-        
-        var columns = processHeaders('#studentTable thead tr:nth-child(1) th');
-        var monthCol = processHeaders('#studentTable thead tr:nth-child(2) th', 2); // смещение +2 индекса
-        
-        
-        // Удаляем дубликаты заголовков, но сохраняем их индексы
-        var uniqueColumns = [];
-        columns.forEach(col => {
-            if (!uniqueColumns.some(uniqueCol => uniqueCol.header === col.header)) {
-                uniqueColumns.push(col);
-            }
-        });
 
-        var uniqueColumnsMonth = [];
-        monthCol.forEach(col => {
-            if (!uniqueColumnsMonth.some(uniqueCol => uniqueCol.header === col.header)) {
-                uniqueColumnsMonth.push(col);
-            }
-        });
+        function parseCell(val) {
+            if (val === '') return 0;
+            if (val === 'ОТ' || val==='Б') return 1;
+            return +val;
+        }
+                
+        var headerRowsCount = $('#studentTable thead tr').length;
 
-        $('#studentTable tbody tr').each(function () {
-            var rowDataColumns = uniqueColumns.map(col => processCell(this, col, columns));
-            var rowDataMonths = uniqueColumnsMonth.map(col => processCell(this, col, monthCol));
-            
-            // Добавляем в разные массивы, если требуется
-            tableData.push(rowDataColumns.concat(rowDataMonths));
-        });
-        
-        function processCell(row, col, columnList) {
-            var columnValues = columnList
-                .filter(c => c.header === col.header)
-                .map(column => {
-                    var cellValue = $(row).find(`td:nth-child(${column.index + 1})`).text().trim();
-                    if (cellValue === "ОТ" || cellValue === "Б") return 1;
-                    if (cellValue === "") return 0;
-                    return !isNaN(cellValue) ? parseFloat(cellValue) : cellValue;
+        if (headerRowsCount === 3) {
+            // 1) Раскрываем colspan’ы и получаем три массива одинаковой длины:
+            const head0 = []; // годы (повторяются по colspan)
+            $('#studentTable thead tr:eq(0) th:not([rowspan="3"])').each(function(){
+                const $th   = $(this);
+                const span  = +($th.attr('colspan') || 1);
+                for(let i = 0; i < span; i++) head0.push($th.text().trim());
+            });
+
+            const head1 = []; // месяцы
+            $('#studentTable thead tr:eq(1) th').each(function(){
+                const $th   = $(this);
+                const span  = +($th.attr('colspan') || 1);
+                for(let i = 0; i < span; i++) head1.push($th.text().trim());
+            });
+
+            const head2 = $('#studentTable thead tr:eq(2) th')
+                            .map((_,th) => $(th).text().trim())
+                            .get(); // дни
+
+            // 2) Статические заголовки и их реальные позиции в строке:
+            const staticThs = $('#studentTable thead tr:eq(0) th[rowspan="3"]')
+                                .map((_,th)=>({
+                                    header: $(th).text().trim(),
+                                    pos:    $(th).index() // порядковый номер ячейки в <tr>
+                                }))
+                                .get();
+            // staticThs[0]=№, staticThs[1]=Ученики, staticThs[2]=Итог за период
+
+            // 3) Собираем «динамический» массив:
+            //    year/month/day + реальная позиция = 2 + i, т.к. первые 2 — статические
+            const dyn = head0.map((year,i)=>({
+                year,
+                month: head1[i],
+                day:   head2[i],
+                pos:   2 + i
+            }));
+
+            // 4) Уникальный порядок годов и месяцев
+            const years = Array.from(new Set(head0));
+            const monthsByYear = {};
+            years.forEach(y => {
+                monthsByYear[y] = {};
+                dyn.filter(d => d.year === y)
+                .forEach(d => {
+                    if (!monthsByYear[y][d.month]) monthsByYear[y][d.month] = [];
+                    monthsByYear[y][d.month].push(d);
                 });
-        
-            return columnValues.length === 1 && typeof columnValues[0] === "string"
-                ? columnValues[0] // Если единственное значение - строка, возвращаем как есть
-                : columnValues.reduce((acc, val) => acc + (typeof val === "number" ? val : 0), 0); // Суммируем только числа
+            });
+
+            // 5) Формируем новый список заголовков
+            columnHeaders.push(staticThs[0].header, staticThs[1].header); // «№», «Ученики»
+
+            years.forEach(y => {
+                Object.keys(monthsByYear[y]).forEach(m => {
+                // все дни
+                monthsByYear[y][m].forEach(d => {
+                    columnHeaders.push(`${d.day} ${m} ${y}`);
+                });
+                // итог по месяцу
+                columnHeaders.push(`${m} ${y}`);
+                });
+                // итог по году
+                columnHeaders.push(y);
+            });
+
+            // затем итог за период
+            columnHeaders.push(staticThs[2].header);
+
+            // 6) Собираем данные строк — так, чтобы tableData был массивом массивов
+            tableData = Array.from($('#studentTable tbody tr')).map(tr => {
+                const texts = $(tr).find('td').map((_,td)=>$(td).text().trim()).get();
+                const row = [];
+
+                // №, Ученики
+                row.push(parseCell(texts[ staticThs[0].pos ]));
+                row.push(texts[ staticThs[1].pos ]);
+
+                // динамика: дни→месяц→год
+                years.forEach(y => {
+                let sumYear = 0;
+                Object.keys(monthsByYear[y]).forEach(m => {
+                    let sumMonth = 0;
+                    monthsByYear[y][m].forEach(d => {
+                    const v = parseCell(texts[d.pos]);
+                    row.push(v);
+                    sumMonth += v;
+                    });
+                    row.push(sumMonth);
+                    sumYear += sumMonth;
+                });
+                row.push(sumYear);
+                });
+
+                // Итог за период
+                row.push(parseCell(texts[ texts.length - 1 ]));
+                return row;
+            });
+        } else {
+            // ДВУХУРОВНЕВАЯ thead ТАБЛИЦА
+            var columns = [];
+            var monthCol = [];
             
+            var columns = processHeaders('#studentTable thead tr:nth-child(1) th');
+            var monthCol = processHeaders('#studentTable thead tr:nth-child(2) th', 2); // смещение +2 индекса
+            
+            
+            // Удаляем дубликаты заголовков, но сохраняем их индексы
+            var uniqueColumns = [];
+            columns.forEach(col => {
+                if (!uniqueColumns.some(uniqueCol => uniqueCol.header === col.header)) {
+                    uniqueColumns.push(col);
+                }
+            });
+
+            var uniqueColumnsMonth = [];
+            monthCol.forEach(col => {
+                if (!uniqueColumnsMonth.some(uniqueCol => uniqueCol.header === col.header)) {
+                    uniqueColumnsMonth.push(col);
+                }
+            });
+
+            $('#studentTable tbody tr').each(function () {
+                var rowDataColumns = uniqueColumns.map(col => processCell(this, col, columns));
+                var rowDataMonths = uniqueColumnsMonth.map(col => processCell(this, col, monthCol));
+                
+                // Добавляем в разные массивы, если требуется
+                tableData.push(rowDataColumns.concat(rowDataMonths));
+            });
+            
+            function processCell(row, col, columnList) {
+                var columnValues = columnList
+                    .filter(c => c.header === col.header)
+                    .map(column => {
+                        var cellValue = $(row).find(`td:nth-child(${column.index + 1})`).text().trim();
+                        if (cellValue === "ОТ" || cellValue === "Б") return 1;
+                        if (cellValue === "") return 0;
+                        return !isNaN(cellValue) ? parseFloat(cellValue) : cellValue;
+                    });
+            
+                return columnValues.length === 1 && typeof columnValues[0] === "string"
+                    ? columnValues[0] // Если единственное значение - строка, возвращаем как есть
+                    : columnValues.reduce((acc, val) => acc + (typeof val === "number" ? val : 0), 0); // Суммируем только числа
+                
+            }
+
+            // Выводим массив строк - только заголовки для DataFrame
+            var allUniqueColumns = [...uniqueColumns, ...uniqueColumnsMonth]; // Объединяем массивы
+            var columnHeaders = allUniqueColumns.map(col => col.header); // Извлекаем заголовки
+
+            // ФОРМИРОВАНИЕ TABLEDATA И COLUMNHEADERS
+            // 1) Список месяцев в порядке их появления
+            var months = uniqueColumns
+            .map(c => c.header)
+            .filter(h => monthCol.some(mc => {
+                var parent = columns.find(col => col.index === mc.index).header;
+                return parent === h;
+            }));
+
+            // 2) Группируем объекты дней по месяцу (с индексами)
+            var daysByMonth = {};
+            months.forEach(m => {
+            daysByMonth[m] = monthCol.filter(mc => {
+                var parent = columns.find(col => col.index === mc.index).header;
+                return parent === m;
+            });
+            });
+
+            // 3) Статические колонки (те, что идут после месяцев)
+            var staticCols = uniqueColumns
+            .filter(c =>
+                c.header !== "№" &&
+                c.header !== "Ученики" &&
+                !months.includes(c.header)
+            );
+
+            // 4) Новый порядок заголовков
+            var newColumnHeaders = ["№", "Ученики"];
+            months.forEach(m => {
+            // сначала дни
+            daysByMonth[m].forEach(mc => {
+                newColumnHeaders.push(mc.header + " " + m);
+            });
+            // потом сам месяц (сумма)
+            newColumnHeaders.push(m);
+            });
+            // в конец — итоговые колонки
+            staticCols.forEach(c => newColumnHeaders.push(c.header));
+
+            // 5) Собираем tableData в новом порядке
+            var newTableData = [];
+            $('#studentTable tbody tr').each(function() {
+            // 5.1) Вытягиваем все ячейки
+            var rowValues = $(this).find('td').map((i, td) => {
+                var t = $(td).text().trim();
+                if (t === "")           return 0;
+                if (t === "ОТ" || t === "Б") return 1;
+                return !isNaN(t) ? parseFloat(t) : t;
+            }).get();
+
+            var newRow = [];
+            // № и Ученики
+            newRow.push(rowValues[0], rowValues[1]);
+
+            // 5.2) Для каждого месяца: дни → сумма
+            months.forEach(m => {
+                // дни в порядке из daysByMonth
+                daysByMonth[m].forEach(mc => {
+                newRow.push(rowValues[mc.index]);
+                });
+                // сумма по этому месяцу
+                var sum = daysByMonth[m]
+                .reduce((acc, mc) => acc + (rowValues[mc.index] || 0), 0);
+                newRow.push(sum);
+            });
+
+            // 5.3) Финальные статические колонки
+            staticCols.forEach(c => {
+                var idx = uniqueColumns.find(col => col.header === c.header).index;
+                newRow.push(rowValues[idx]);
+            });
+
+            newTableData.push(newRow);
+            });
+
+            // 6) Применяем
+            columnHeaders = newColumnHeaders;
+            tableData = newTableData;
         }
 
-        // Выводим массив строк - только заголовки для DataFrame
-        var allUniqueColumns = [...uniqueColumns, ...uniqueColumnsMonth]; // Объединяем массивы
-        var columnHeaders = allUniqueColumns.map(col => col.header); // Извлекаем заголовки
     }
     else{
-        var tableData = [];
+
         var columns = [];
-    
+   
         // Обработка первой строки заголовка (первый tr)
         $('#studentTable thead tr:nth-child(1) th').each(function () {
             var colspan = $(this).attr('colspan');
@@ -1261,14 +1212,16 @@ function analyzeABCData() {
             tableData.push(rowData);
         });
 
-        var columnHeaders = [...columns];
+        columnHeaders = [...columns];
     }
 
-    // // Вывод результата (для отладки)
-    // console.log("Unique Columns:", uniqueColumns);
-    // console.log("Unique Columns Month:", uniqueColumnsMonth);
-    // console.log("Table Data (column sums):", tableData);
+    return { tableData, columnHeaders };
+}
 
+// ABC-анализ
+function analyzeABCData() {
+    // Получаем данные из таблицы
+    var { tableData, columnHeaders } = parceForAnalysis();
 
     // Получаем значения из меню настроек
     var thresholdA = parseFloat($('#thresholdA').val());
@@ -1289,14 +1242,18 @@ function analyzeABCData() {
         return;
     }
 
-
     $.ajax({
         url: '/analyzeabc',
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify({ data: tableData, columns: columnHeaders, thresholds: { A: thresholdA, B: thresholdB, C: thresholdC }, analysisMeasure: analysisMeasure, analysisType: analysisType }),
         success: function (response) {
-            console.log("Server Response: ", response);
+            // Заполнение хранилища
+            setThresholdA(thresholdA);
+            setThresholdB(thresholdB); 
+            setThresholdC(thresholdC);
+            setTypeAnalyze('abc');
+            setAnalysis(analysisType == 'attendance' ? 'attendance' : 'grades');
 
             var analysisMeasure = $('#analysisMeasure option:selected').text(); // Получаем текст выбранной опции из меню
 
@@ -1313,95 +1270,114 @@ function analyzeABCData() {
                 analysisHeader.textContent = 'ABC-анализ успеваемости'
             }
 
-            $('#resTable thead').empty();
-            var headerRow = '<tr>';
-            headerRow += '<th>№</th>';
-            headerRow += '<th>Ученики</th>';
-            headerRow += `<th>${analysisMeasure}</th>`;
-            headerRow += '<th>Процент</th>';
-            headerRow += '<th>Кумулятивный процент</th>';
-            headerRow += '<th>Категория</th>';
-            headerRow += '</tr>';
-            $('#resTable thead').append(headerRow);
+            // 1) Считаем количество по категориям
+            // Подсчёт категорий
+            const counts = { A: 0, B: 0, C: 0 };
 
-            var sumMeasure = 0;
-
-            $('#resTable tbody').empty();
-            response.forEach(function (row) {
-                var rowClass;
-                if (row['Категория'] === 'A') {
-                    rowClass = 'row-category-a';
-                } else if (row['Категория'] === 'B') {
-                    rowClass = 'row-category-b';
-                } else if (row['Категория'] === 'C') {
-                    rowClass = 'row-category-c';
-                }
-
-                var newRow = `<tr class="${rowClass}">`;
-                newRow += `<td>${row['№']}</td>`;
-                newRow += `<td>${row['Ученики']}</td>`;
-                newRow += `<td>${row[analysisMeasure]}</td>`;
-                newRow += `<td>${row['Процент']}</td>`;
-                newRow += `<td>${row['Кумулятивный процент']}</td>`;
-                newRow += `<td>${row['Категория']}</td>`;
-                newRow += '</tr>';
-                sumMeasure += parseFloat(row[analysisMeasure].toFixed(2));
-                $('#resTable tbody').append(newRow);
+            response.forEach(r => {
+            const cat = r['Категория'];
+            if (cat === 'A') counts.A++;
+            if (cat === 'B') counts.B++;
+            if (cat === 'C') counts.C++;
             });
 
-            var newRow = '<tr>';
-            newRow += `<td>Сумма</td>`;
-            newRow += `<td>-</td>`;
-            newRow += `<td>${sumMeasure}</td>`;
-            newRow += `<td>100%</td>`;
-            newRow += `<td>-</td>`;
-            newRow += `<td>-</td>`;
-            newRow += '</tr>';
-            $('#resTable tbody').append(newRow);
-
-            $('.containerTable1').css('display', 'table');
-
-            google.charts.load('current', { packages: ['corechart', 'bar'] });
-            google.charts.setOnLoadCallback(drawChart);
-
-            function drawChart() {
-                var dataArray = [
-                    ['Ученики', analysisMeasure, { role: 'style' }, { role: 'tooltip', 'p': { 'html': true } }]
+            // 2) подготовим массив строк для DataTables
+            var dtData = response.map(function(r){
+                return [
+                r['№'],
+                r['Ученики'],
+                r[analysisMeasure],
+                r['Процент'],
+                r['Кумулятивный процент'],
+                r['Категория']
                 ];
-
-                response.forEach(function (row) {
-                    var color;
-                    if (row['Категория'] === 'A') {
-                        color = 'green';
-                    } else if (row['Категория'] === 'B') {
-                        color = 'yellow';
-                    } else {
-                        color = 'red';
-                    }
-                    var tooltip = '<div style="padding:5px;"><b>Ученик: ' + row['Ученики'] + '</b><br><b>' + analysisMeasure + ': ' + row[analysisMeasure] + '</b><br><b>Категория: ' + row['Категория'] + '</b></div>';
-                    dataArray.push([row['Ученики'], parseFloat(row[analysisMeasure]), color, tooltip]);
-                });
-
-                var data = google.visualization.arrayToDataTable(dataArray);
-
-                var options = {
-                    title: 'ABC-анализ ' + (analysisType == 'attendance' ? 'посещаемости' : 'успеваемости'),
-                    hAxis: {
-                        title: 'Ученики'
-                    },
-                    vAxis: {
-                        title: analysisMeasure
-                    },
-                    legend: { position: 'none' },
-                    tooltip: { isHtml: true }
-                };
-
-                var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
-                chart.draw(data, options);
+            });
+            
+            // 3) инициализация
+            if ( $.fn.DataTable.isDataTable('#resTable') ) {
+                $('#resTable').DataTable().clear().destroy();
             }
+            
+            $('#resTable').DataTable({
+                data: dtData,
+                columns: [
+                { title: '№' },
+                { title: 'Ученики' },
+                { title: analysisMeasure },
+                { title: 'Процент' },
+                { title: 'Кумулятивный процент' },
+                { title: 'Категория' }
+                ],
+
+                // отключаем первичную сортировку
+                order: [],
+
+                // сразу 100 строк
+                pageLength: 100,
+                lengthMenu: [ [10, 25, 50, 100], [10, 25, 50, 100] ],
+
+                // экспорт-кнопки
+                dom: 'lBfrtip',
+                buttons: [
+                    {
+                    extend: 'copyHtml5',
+                    text:    'Копировать',
+                    className: 'btn btn-outline-secondary btn-sm'
+                    },
+                    {
+                    extend: 'excelHtml5',
+                    text:    'Excel',
+                    className: 'btn btn-outline-success btn-sm'
+                    },
+                    {
+                    extend: 'pdfHtml5',
+                    text:    'PDF',
+                    className: 'btn btn-outline-danger btn-sm'
+                    },
+                    {
+                    extend: 'print',
+                    text:    'Печать',
+                    className: 'btn btn-outline-primary btn-sm'
+                    }
+                ],
+
+                paging:    true,
+                searching: true,
+                ordering:  true,
+                language:  { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/ru.json' },
+               
+                createdRow: function(row, data){
+                // раскрашиваем строку по категории в последнем столбце
+                var cat = data[5]; // колонка «Категория»
+                if (cat==='A')  $(row).addClass('row-category-a');
+                if (cat==='B')  $(row).addClass('row-category-b');
+                if (cat==='C')  $(row).addClass('row-category-c');
+                }
+            });
+
+            pieCounts = counts; // запомним для переключения
+
+            // 4) Метрики
+            // Показываем карточки метрик и блоки
+            document.getElementById('metricsCards').style.display = 'flex';
+            document.querySelectorAll('details').forEach(d => d.style.display = 'block');
+            document.getElementById('filters-form').style.display = 'block';
+            document.getElementById('totalCount').textContent = response.length;
+            document.getElementById('countA').textContent = counts.A;
+            document.getElementById('countB').textContent = counts.B;
+            document.getElementById('countC').textContent = counts.C;
+
+            // 5) Рисуем все графики
+            drawHistogram(response, analysisMeasure);
+            drawPieChart(pieCounts);
+            
 
             // После отрисовки графика делаем блок с рекомендациями видимым
             document.getElementById('recommendations').style.display = 'block';
+
+            if (window.loadStudents) {
+                window.loadStudents();
+            }
         },
         error: function (jqXHR, textStatus, errorThrown) {
             console.error('AJAX Error:', textStatus, errorThrown);
@@ -1409,139 +1385,534 @@ function analyzeABCData() {
         }
     });
 }
+// «Пробрасываем» в глобальный scope
+window.analyzeABCData = analyzeABCData;
 
+//////////////////////////////Г//Р///А////Ф////И////К///И////////////////////////////////////////////////////////////////////////
+// === 3. Гистограмма ===
+function drawHistogram(dataRows, measure) {
+    // подготовка данных
+    const categories = dataRows.map(r => r['Ученики']);
+    const values = dataRows.map(r => +r[measure]);
+    const colors = dataRows.map(r =>
+      r['Категория'] === 'A' ? 'green'
+      : r['Категория'] === 'B' ? 'yellow'
+      : 'red'
+    );
+  
+    // инициализация ECharts
+    const chartDom = document.getElementById('chart_histogram');
+    const myChart = echarts.init(chartDom);
+  
+    // опции
+    const option = {
+      title: {
+        text: 'Гистограмма',
+        left: 'center',
+        textStyle: { fontSize: 20 }
+      },
+      grid: { top: 60, left: 50, right: 30, bottom: 50 },
+      xAxis: {
+        type: 'category',
+        name: 'Ученики',
+        data: categories,
+        axisLabel: { rotate: 45, interval: 0 }
+      },
+      yAxis: {
+        type: 'value',
+        name: measure
+      },
+      tooltip: {
+        trigger: 'item',
+        formatter: params => {
+          const i = params.dataIndex;
+          const r = dataRows[i];
+          return `
+            <div style="padding:5px;">
+              <b>${r['Ученики']}</b><br/>
+              <b>${measure}: ${r[measure]}</b><br/>
+              <b>Категория: ${r['Категория']}</b>
+            </div>
+          `;
+        },
+        backgroundColor: 'rgba(255,255,255,0.9)',
+        borderColor: '#aaa',
+        borderWidth: 1,
+        textStyle: { color: '#333' },
+        extraCssText: 'box-shadow: 0 0 5px rgba(0,0,0,0.3);'
+      },
+      series: [{
+        name: measure,
+        type: 'bar',
+        data: values.map((v, idx) => ({
+          value: v,
+          itemStyle: { color: colors[idx] }
+        })),
+        barWidth: '60%',
+        emphasis: {
+          itemStyle: { opacity: 0.8 }
+        }
+      }]
+    };
+  
+    // отрисовка
+    myChart.setOption(option);
+  
+    // при изменении размера окна – ресайз графика
+    window.addEventListener('resize', () => myChart.resize());
+  }
+  
+// === 4. Круговая 2D-диаграмма ===
 
+// текущие данные
+let pieCounts = { A: 0, B: 0, C: 0 };
+
+// регистрируем тему (опционально)
+echarts.registerTheme('myLight', {
+  backgroundColor: '#fafafa',
+  textStyle: { color: '#333' },
+  title:     { textStyle: { color: '#555', fontWeight: 'normal' } },
+  legend:    { textStyle: { color: '#444' } }
+});
+
+function drawPieChart(counts) {
+  const chartDom = document.getElementById('chart_pie3d');
+  const myChart  = echarts.init(chartDom, 'myLight');
+
+  // готовим градиенты
+  const gradientColors = [
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+      { offset: 0, color: '#4CAF50' },
+      { offset: 1, color: '#8BC34A' }
+    ]),
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+      { offset: 0, color: '#FFEB3B' },
+      { offset: 1, color: '#FFC107' }
+    ]),
+    new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+      { offset: 0, color: '#F44336' },
+      { offset: 1, color: '#E91E63' }
+    ])
+  ];
+
+  // приводим в формат для 2D pie
+  const data2d = [
+    { value: counts.A, name: 'A категория' },
+    { value: counts.B, name: 'B категория' },
+    { value: counts.C, name: 'C категория' }
+  ];
+
+  myChart.setOption({
+    title: {
+      text: 'Соотношение учащихся по группам',
+      left:   'center',
+      top:    20,
+      textStyle: { fontSize: 20 }
+    },
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}: {c} ({d}%)'
+    },
+    legend: {
+      orient: 'vertical',
+      left:   20,
+      top:    'middle',
+      data:   data2d.map(d => d.name)
+    },
+    series: [{
+      type: 'pie',
+      radius: '60%',
+      center: ['50%', '55%'],
+      data: data2d.map((d, i) => ({
+        value: d.value,
+        name:  d.name,
+        itemStyle: {
+          color:       gradientColors[i],
+          shadowBlur:  20,
+          shadowColor: 'rgba(0,0,0,0.2)'
+        }
+      })),
+      label: {
+        show:      true,
+        formatter: '{b}\n{d}%',
+        fontSize:  12,
+        lineHeight: 18
+      },
+      labelLine: {
+        length:  15,
+        length2: 10,
+        smooth:  true,
+        lineStyle: { width: 2 }
+      },
+      emphasis: {
+        itemStyle: {
+          shadowBlur:  30,
+          shadowColor: 'rgba(0,0,0,0.3)'
+        },
+        label: {
+          fontSize:   16,
+          fontWeight: 'bold'
+        }
+      },
+      animationType:   'scale',
+      animationEasing: 'elasticOut',
+      animationDelay:  idx => idx * 200
+    }]
+  });
+}
+
+// при изменении размера окна — имзменение размера диаграммы
+window.addEventListener('resize', () => {
+  const chartDom = document.getElementById('chart_pie3d');
+  const myChart  = echarts.getInstanceByDom(chartDom);
+  if (myChart) myChart.resize();
+});
+
+//////////////////////////////Г//Р///А////Ф////И////К///И////////////////////////////////////////////////////////////////////////
 
 // XYZ-анализ
+// function analyzeXYZData() {
+//     // Получаем данные из таблицы
+//     var { tableData, columnHeaders } = parceForAnalysis();
+
+//     console.log("tableData: ", tableData); // Отладочный вывод
+//     console.log("columnHeaders: ", columnHeaders); // Отладочный вывод
+
+//     // Получаем значения из меню настроек
+//     var thresholdX = parseFloat($('#thresholdX').val());
+//     var thresholdY = parseFloat($('#thresholdY').val());
+//     var thresholdZ = parseFloat($('#thresholdZ').val());
+//     var analysisMeasure1 = $('#startQuarter option:selected').text(); // Получаем текст выбранной опции из меню
+//     var analysisMeasure2 = $('#endQuarter option:selected').text(); // Получаем текст выбранной опции из меню
+
+//     // Проверка, что пороги в сумме дают 1
+//     if (thresholdX + thresholdY + thresholdZ !== 100) {
+//         alert("Ошибка: Сумма порогов должна быть равна 100.");
+//         return;
+//     }
+
+//     $.ajax({
+//         url: '/analyzexyz',
+//         type: 'POST',
+//         contentType: 'application/json',
+//         data: JSON.stringify({ data: tableData, columns: columnHeaders, thresholds: { X: thresholdX, Y: thresholdY, Z: thresholdZ }, analysisMeasure1: analysisMeasure1, analysisMeasure2: analysisMeasure2 }),
+//         success: function (response) {
+//             // Заполнение хранилища
+//             setThresholdX(thresholdX);
+//             setThresholdY(thresholdY); 
+//             setThresholdZ(thresholdZ);
+//             setTypeAnalyze('xyz');
+//             var analysisType = $('#analysisType').val(); // Получаем выбранную меру из меню
+//             setAnalysis(analysisType == 'attendance' ? 'attendance' : 'grades');
+
+//             var analysisMeasure1 = $('#startQuarter option:selected').text(); // Получаем текст выбранной опции из меню
+//             var analysisMeasure2 = $('#endQuarter option:selected').text(); // Получаем текст выбранной опции из меню
+//             var analysisMeasure = analysisMeasure1 + " - " + analysisMeasure2;
+
+//             console.log("Current startQuarter: ", analysisMeasure); // Отладочный вывод
+
+            
+//             var analysisHeader = document.getElementById('analysisHeader');
+
+//             analysisHeader.style.display = 'block';
+//             if (analysisType == 'attendance') {
+//                 analysisHeader.textContent = 'XYZ-анализ посещаемости'
+//             }
+//             else {
+//                 analysisHeader.textContent = 'XYZ-анализ успеваемости'
+//             }
+
+//             // 1) Считаем количество по категориям
+//             // Подсчёт категорий
+//             const counts = { X: 0, Y: 0, Z: 0 };
+
+//             response.forEach(r => {
+//             const cat = r['Категория'];
+//             if (cat === 'X') counts.X++;
+//             if (cat === 'Y') counts.Y++;
+//             if (cat === 'Z') counts.Z++;
+//             });
+
+//             // 2) подготовим массив строк для DataTables
+//             var dtData = response.map(function(r){
+//                 return [
+//                 r['№'],
+//                 r['Ученики'],
+//                 r['Анализируемый период'],
+//                 r['Коэффициент вариации'],
+//                 r['Категория']
+//                 ];
+//             });
+            
+//             // 3) инициализация
+//             if ( $.fn.DataTable.isDataTable('#resTable') ) {
+//                 $('#resTable').DataTable().clear().destroy();
+//             }
+            
+//             var table = $('#resTable').DataTable({
+//                 data: dtData,
+//                 columns: [
+//                 { title: '№' },
+//                 { title: 'Ученики' },
+//                 { title: analysisMeasure },
+//                 { title: 'Коэффициент вариации' },
+//                 { title: 'Категория' }
+//                 ],
+
+//                 // отключаем первичную сортировку
+//                 order: [],
+
+//                 // сразу 100 строк
+//                 pageLength: 100,
+//                 lengthMenu: [ [10, 25, 50, 100], [10, 25, 50, 100] ],
+
+//                 // экспорт-кнопки
+//                 dom: 'lBfrtip',
+//                 buttons: [
+//                     {
+//                     extend: 'copyHtml5',
+//                     text:    'Копировать',
+//                     className: 'btn btn-outline-secondary btn-sm'
+//                     },
+//                     {
+//                     extend: 'excelHtml5',
+//                     text:    'Excel',
+//                     className: 'btn btn-outline-success btn-sm'
+//                     },
+//                     {
+//                     extend: 'pdfHtml5',
+//                     text:    'PDF',
+//                     className: 'btn btn-outline-danger btn-sm'
+//                     },
+//                     {
+//                     extend: 'print',
+//                     text:    'Печать',
+//                     className: 'btn btn-outline-primary btn-sm'
+//                     }
+//                 ],
+
+//                 paging:    true,
+//                 searching: true,
+//                 ordering:  true,
+//                 language:  { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/ru.json' },
+               
+//                 // Для каждой строки при создании добавляем класс и привязываем contextmenu
+//                 createdRow: function(row, data){
+//                     var $cell = $('td', row).eq(4); // Получаем ячейку с категорией
+//                     $cell.addClass('category-cell'); // Добавляем класс для стилизации
+//                     $cell.on('contextmenu', function(e) {
+//                         e.preventDefault(); // Отменяем стандартное контекстное меню
+//                         $('#category-menu').remove(); // Удаляем предыдущее меню, если есть
+//                         var menu = $('<ul id="category-menu" style="position:absolute; z-index:10000; list-style:none; margin:0; padding:5px; background:#fff; border:1px solid #ccc; border-radius:4px;"></ul>');
+//                         ['X','Y','Z'].forEach(function(cat) {
+//                             $('<li>')
+//                                 .text(cat)
+//                                 .css({ padding: '2px 8px', cursor: 'pointer' })
+//                                 .on('mouseenter', function(){ $(this).css('background','#f0f0f0') })
+//                                 .on('mouseleave', function(){ $(this).css('background','') })
+//                                 .on('click', function() {
+//                                 // Меняем значение в таблице и перекрашиваем строку
+//                                 var cell = table.cell(e.currentTarget);
+//                                 cell.data(cat);
+//                                 table.row(cell.index().row).invalidate().draw(false);
+//                                 menu.remove();
+//                                 })
+//                                 .appendTo(menu);
+//                         });
+//                         // Показываем меню в точке клика
+//                         $('body').append(menu);
+//                         menu.css({ top: e.pageY, left: e.pageX });
+//                     });
+//                 },
+
+//             // При каждом рендере обновляем класс строки под нужную категорию
+//             rowCallback: function(row, data) {
+//                 $(row).removeClass('row-category-x row-category-y row-category-z');
+//                 var cat = data[4];
+//                 if (cat === 'X') $(row).addClass('row-category-x');
+//                 else if (cat === 'Y') $(row).addClass('row-category-y');
+//                 else if (cat === 'Z') $(row).addClass('row-category-z');
+//             }
+//         });
+
+//         // Скрываем меню, если кликнули где-то ещё
+//         $(document).on('click', function(e) {
+//             if (!$(e.target).closest('#category-menu').length) {
+//             $('#category-menu').remove();
+//             }
+//         });
+
+//             pieCountsXYZ = counts; // запомним для переключения
+
+//             // 4) Метрики
+//             // Показываем карточки метрик и блоки
+//             document.getElementById('metricsCards').style.display = 'flex';
+//             document.querySelectorAll('details').forEach(d => d.style.display = 'block');
+//             document.getElementById('filters-form').style.display = 'block';
+//             document.getElementById('totalCount').textContent = response.length;
+//             document.getElementById('countX').textContent = counts.X;
+//             document.getElementById('countY').textContent = counts.Y;
+//             document.getElementById('countZ').textContent = counts.Z;
+
+//             // 5) Рисуем все графики
+//             drawHistogramXYZ(response, analysisMeasure);
+//             drawPieChartXYZ(pieCountsXYZ);
+            
+
+//             // После отрисовки графика делаем блок с рекомендациями видимым
+//             document.getElementById('recommendations').style.display = 'block';
+
+//             if (window.loadStudents) {
+//                 window.loadStudents();
+//             }
+//         },
+//         error: function (jqXHR, textStatus, errorThrown) {
+//             console.error('AJAX Error:', textStatus, errorThrown);
+//             alert('Ошибка: не удалось выполнить анализ данных.');
+//         }
+//     });
+// }
+
+
+let originalResponse = null;
+let currentResponse = null;
+let table;
+let thresholdX, thresholdY, thresholdZ, maxAllowed, minAllowed;
+let analysisMeasure = 'Период';
+let lastMethod = 'cv';
+
+let isDragging = false;
+let dragAction = null; // 'select' или 'deselect'
+let currentEditSpan = null;
+let $prevCell = null;
+
+// Клик — просто переключаем эту строку
+$(document)
+  .on('click', '#resTable tbody td.select-checkbox', function(e) {
+    if (e.which !== 1) return; // только левая кнопка
+    const rowIdx = table.row(this).index();
+    if ($(table.row(rowIdx).node()).hasClass('selected')) {
+      table.row(rowIdx).deselect();
+    } else {
+      table.row(rowIdx).select();
+    }
+  })
+  // mousedown — начинаем drag, определяем действие по состоянию стартовой строки
+  .on('mousedown', '#resTable tbody td.select-checkbox', function(e) {
+    if (e.which !== 1) return; // только левая кнопка
+    isDragging = true;
+    const rowIdx = table.row(this).index();
+    const isSel = $(table.row(rowIdx).node()).hasClass('selected');
+    dragAction = isSel ? 'deselect' : 'select';
+    // сразу применяем к этой строке
+    if (dragAction === 'select')   table.row(rowIdx).select();
+    else                            table.row(rowIdx).deselect();
+    return false; // чтобы не было выделения текста
+  })
+  // mouseover во время drag — применяем то же действие
+  .on('mouseover', '#resTable tbody td.select-checkbox', function(e) {
+    if (!isDragging) return;
+    const rowIdx = table.row(this).index();
+    if (dragAction === 'select')   table.row(rowIdx).select();
+    else                            table.row(rowIdx).deselect();
+  });
+
+// в любом месте при отпускании мыши — завершаем drag
+$(document).on('mouseup', () => {
+  isDragging = false;
+  dragAction = null;
+});
+
+// === Меню периодов: только для одной выделенной строки ===
+// Выполнить один раз после загрузки скрипта, но до любых перерисовок таблицы:
+$(document).on('contextmenu',
+    '#resTable tbody td.period-cell.editable, #resTable tbody td.period-cell.editable span.period-value',
+    function(e) {
+      e.preventDefault();
+  
+      // 1) Найти <td>
+      const $td = $(e.target).closest('td.period-cell.editable');
+  
+      // 2) Снять подсветку с предыдущей (если была)
+      if ($prevCell) {
+        $prevCell.removeClass('selected-period-cell');
+      }
+  
+      // 3) Добавить подсветку к этой
+      $td.addClass('selected-period-cell');
+      $prevCell = $td;
+  
+      // 4) Показать меню
+      $('#period-menu')
+        .css({ top: e.pageY, left: e.pageX })
+        .data('cell', $td)
+        .show();
+    }
+  );
+  
+  // Скрыть меню и снять подсветку при клике вне
+  $(document).on('click', function(e) {
+    if (!$(e.target).closest('#period-menu, #resTable td.period-cell.editable').length) {
+      $('#period-menu').hide();
+      if ($prevCell) {
+        $prevCell.removeClass('selected-period-cell');
+        $prevCell = null;
+      }
+    }
+  });
+  
+
+// Обработка кликов в period-menu
+$('#period-menu').on('click', 'li', function() {
+  const action = $(this).data('action');
+  const $cell  = $('#period-menu').data('cell');
+  const cell   = table.cell($cell);
+  const rowIdx = cell.index().row;
+  const quarter= $cell.data('quarter');
+
+  if (action === 'outlier') {
+    // замена резкого выброса этого периода на среднее остальных
+    const periods = currentResponse[rowIdx].period;
+    const values  = Object.entries(periods).map(([k,v]) => ({k,v:+v}));
+    const mean    = values.reduce((s,o)=>s+o.v,0)/values.length;
+    currentResponse[rowIdx].period[quarter] = mean;
+  }
+  else if (action === 'reset') {
+    // вернуть исходное из originalResponse
+    const orig = originalResponse[rowIdx].period[quarter];
+    currentResponse[rowIdx].period[quarter] = orig;
+  }
+
+  // Общий пересчет
+  recalcRow(rowIdx);
+
+  // Обновление таблицы и графиков
+  drawTable(currentResponse);
+  showMetrics(currentResponse);
+  drawHistogramXYZ(currentResponse);
+  drawPieChartXYZ(currentResponse);
+
+  $('#period-menu').hide();
+});
+
+// Крестик закрывает period-menu
+$('#period-menu').on('click', '.close-period-menu', function(e) {
+    e.stopPropagation();
+    $('#period-menu').hide();
+});
+
+
 function analyzeXYZData() {
-    function checkLearningPeriods(selector) {
-        var theadRows = $(selector).closest('thead').find('tr');
-        var hasLearningPeriods = false;
-    
-        theadRows.each(function () {
-            if ($(this).text().includes("Учебные периоды")) {
-                hasLearningPeriods = true;
-            }
-        });
-    
-        return hasLearningPeriods;
-    }
+    // Получаем данные из таблицы
+    var { tableData, columnHeaders } = parceForAnalysis();
 
-    
-    function checkTheadRowCount(selector, expectedCount = 2) {
-        var theadRows = $(selector).closest('thead').find('tr');
-        return theadRows.length === expectedCount;
-    }
-
-    if (!checkLearningPeriods("thead th") || !checkTheadRowCount("thead th", 2)){
-        var tableData = [];
-        var columns = [];
-        var monthCol = [];
-        
-        function processHeaders(selector, indexOffset = 0) {
-            var result = [];
-            $(selector).each(function () {
-                var colspan = parseInt($(this).attr('colspan') || 1, 10);
-                var headerText = $(this).text().trim();
-                for (var i = 0; i < colspan; i++) {
-                    result.push({ header: headerText, index: result.length + indexOffset });
-                }
-            });
-            return result;
-        }
-        
-        var columns = processHeaders('#studentTable thead tr:nth-child(1) th');
-        var monthCol = processHeaders('#studentTable thead tr:nth-child(2) th', 2); // смещение +2 индекса
-        
-        
-        // Удаляем дубликаты заголовков, но сохраняем их индексы
-        var uniqueColumns = [];
-        columns.forEach(col => {
-            if (!uniqueColumns.some(uniqueCol => uniqueCol.header === col.header)) {
-                uniqueColumns.push(col);
-            }
-        });
-
-        var uniqueColumnsMonth = [];
-        monthCol.forEach(col => {
-            if (!uniqueColumnsMonth.some(uniqueCol => uniqueCol.header === col.header)) {
-                uniqueColumnsMonth.push(col);
-            }
-        });
-
-        $('#studentTable tbody tr').each(function () {
-            var rowDataColumns = uniqueColumns.map(col => processCell(this, col, columns));
-            var rowDataMonths = uniqueColumnsMonth.map(col => processCell(this, col, monthCol));
-            
-            // Добавляем в разные массивы, если требуется
-            tableData.push(rowDataColumns.concat(rowDataMonths));
-        });
-        
-        function processCell(row, col, columnList) {
-            var columnValues = columnList
-                .filter(c => c.header === col.header)
-                .map(column => {
-                    var cellValue = $(row).find(`td:nth-child(${column.index + 1})`).text().trim();
-                    if (cellValue === "ОТ" || cellValue === "Б") return 1;
-                    if (cellValue === "") return 0;
-                    return !isNaN(cellValue) ? parseFloat(cellValue) : cellValue;
-                });
-        
-            return columnValues.length === 1 && typeof columnValues[0] === "string"
-                ? columnValues[0] // Если единственное значение - строка, возвращаем как есть
-                : columnValues.reduce((acc, val) => acc + (typeof val === "number" ? val : 0), 0); // Суммируем только числа
-            
-        }
-
-        // Выводим массив строк - только заголовки для DataFrame
-        var allUniqueColumns = [...uniqueColumns, ...uniqueColumnsMonth]; // Объединяем массивы
-        var columnHeaders = allUniqueColumns.map(col => col.header); // Извлекаем заголовки
-    }
-    else{
-        var tableData = [];
-        var columns = [];
-    
-        // Обработка первой строки заголовка (первый tr)
-        $('#studentTable thead tr:nth-child(1) th').each(function () {
-            var colspan = $(this).attr('colspan');
-            if (colspan) {
-                // Обработка второй строки заголовка (второй tr)
-                var secondRowHeaders = document.querySelectorAll('#studentTable thead tr:nth-child(2) th');
-                for (var i = 0; i < colspan; i++) {
-                    columns.push(secondRowHeaders[i].textContent);
-                }
-            } else {
-                // Если colspan не указан, добавляем просто название столбца
-                columns.push($(this).text());
-            }
-        });
-    
-        // Обработка данных в теле таблицы
-        $('#studentTable tbody tr').each(function () {
-            var rowData = [];
-            $(this).find('td').each(function () {
-                if ($(this).text().trim() == '') {
-                    rowData.push('0');
-                }
-                else{
-                    if($(this).text().trim() == "ОТ" || $(this).text().trim() == 'Б') {
-                        rowData.push('1');
-                    }
-                    else{
-                        rowData.push($(this).text());
-                    }
-                }
-            });
-            tableData.push(rowData);
-        });
-
-        var columnHeaders = [...columns];
-    }
+    console.log("tableData: ", tableData); // Отладочный вывод
+    console.log("columnHeaders: ", columnHeaders); // Отладочный вывод
 
     // Получаем значения из меню настроек
-    var thresholdX = parseFloat($('#thresholdX').val());
-    var thresholdY = parseFloat($('#thresholdY').val());
-    var thresholdZ = parseFloat($('#thresholdZ').val());
+    thresholdX = parseFloat($('#thresholdX').val());
+    thresholdY = parseFloat($('#thresholdY').val());
+    thresholdZ = parseFloat($('#thresholdZ').val());
     var analysisMeasure1 = $('#startQuarter option:selected').text(); // Получаем текст выбранной опции из меню
     var analysisMeasure2 = $('#endQuarter option:selected').text(); // Получаем текст выбранной опции из меню
 
@@ -1557,15 +1928,21 @@ function analyzeXYZData() {
         contentType: 'application/json',
         data: JSON.stringify({ data: tableData, columns: columnHeaders, thresholds: { X: thresholdX, Y: thresholdY, Z: thresholdZ }, analysisMeasure1: analysisMeasure1, analysisMeasure2: analysisMeasure2 }),
         success: function (response) {
-            console.log("Server Response: ", response);
+            // Заполнение хранилища
+            setThresholdX(thresholdX);
+            setThresholdY(thresholdY); 
+            setThresholdZ(thresholdZ);
+            setTypeAnalyze('xyz');
+            var analysisType = $('#analysisType').val(); // Получаем выбранную меру из меню
+            setAnalysis(analysisType == 'attendance' ? 'attendance' : 'grades');
 
             var analysisMeasure1 = $('#startQuarter option:selected').text(); // Получаем текст выбранной опции из меню
             var analysisMeasure2 = $('#endQuarter option:selected').text(); // Получаем текст выбранной опции из меню
-            var analysisMeasure = analysisMeasure1 + " - " + analysisMeasure2;
+            analysisMeasure = analysisMeasure1 + " - " + analysisMeasure2;
 
             console.log("Current startQuarter: ", analysisMeasure); // Отладочный вывод
-
-            var analysisType = $('#analysisType').val(); // Получаем выбранную меру из меню
+            console.log("Response: ", response); // Отладочный вывод    
+            
             var analysisHeader = document.getElementById('analysisHeader');
 
             analysisHeader.style.display = 'block';
@@ -1576,92 +1953,27 @@ function analyzeXYZData() {
                 analysisHeader.textContent = 'XYZ-анализ успеваемости'
             }
 
-            $('#resTable thead').empty();
-            var headerRow = '<tr>';
-            headerRow += '<th>№</th>';
-            headerRow += '<th>Ученики</th>';
-            headerRow += `<th>${analysisMeasure}</th>`;
-            headerRow += '<th>Коэффициент вариации</th>';
-            headerRow += '<th>Категория</th>';
-            headerRow += '</tr>';
-            $('#resTable thead').append(headerRow);
+            // Сохраняем «чистый» ответ
+            originalResponse = JSON.parse(JSON.stringify(response));
+            currentResponse = JSON.parse(JSON.stringify(response)); // Сохраняем текущий ответ для дальнейшего использования
+            // Вычисляем максимумы по avg и по сумме, чтобы потом нормировать в проценты
+            window.maxAvg = Math.max(...currentResponse.map(r => r.avg));
+            window.maxSum = Math.max(...currentResponse.map(r => r['Анализируемый период']));
 
-            var sumMeasure = 0;
+            // Рисуем таблицу, метрики и графики
+            drawTable(currentResponse);
+            showMetrics(currentResponse);
 
-            $('#resTable tbody').empty();
-            response.forEach(function (row) {
-                var rowClass;
-                if (row['Категория'] === 'X') {
-                    rowClass = 'row-category-x';
-                } else if (row['Категория'] === 'Y') {
-                    rowClass = 'row-category-y';
-                } else if (row['Категория'] === 'Z') {
-                    rowClass = 'row-category-z';
-                }
-
-                var newRow = `<tr class="${rowClass}">`;
-                newRow += `<td>${row['№']}</td>`;
-                newRow += `<td>${row['Ученики']}</td>`;
-                newRow += `<td>${row["Анализируемый период"]}</td>`;
-                newRow += `<td>${row['Коэффициент вариации']}</td>`;
-                newRow += `<td>${row['Категория']}</td>`;
-                newRow += '</tr>';
-                sumMeasure += parseFloat(row["Анализируемый период"]);
-                $('#resTable tbody').append(newRow);
-            });
-
-            var newRow = '<tr>';
-            newRow += `<td>Сумма</td>`;
-            newRow += `<td>-</td>`;
-            newRow += `<td>${sumMeasure}</td>`;
-            newRow += `<td>100%</td>`;
-            newRow += `<td>-</td>`;
-            newRow += '</tr>';
-            $('#resTable tbody').append(newRow);
-
-            $('.containerTable1').css('display', 'table');
-
-            google.charts.load('current', { packages: ['corechart', 'bar'] });
-            google.charts.setOnLoadCallback(drawChart);
-
-            function drawChart() {
-                var dataArray = [
-                    ['Ученики', analysisMeasure, { role: 'style' }, { role: 'tooltip', 'p': { 'html': true } }]
-                ];
-
-                response.forEach(function (row) {
-                    var color;
-                    if (row['Категория'] === 'X') {
-                        color = 'green';
-                    } else if (row['Категория'] === 'Y') {
-                        color = 'yellow';
-                    } else {
-                        color = 'red';
-                    }
-                    var tooltip = '<div style="padding:5px;"><b>Ученик: ' + row['Ученики'] + '</b><br><b>' + analysisMeasure + ': ' + row["Анализируемый период"] + '</b><br><b>Категория: ' + row['Категория'] + '</b></div>';
-                    dataArray.push([row['Ученики'], parseFloat(row["Анализируемый период"]), color, tooltip]);
-                });
-
-                var data = google.visualization.arrayToDataTable(dataArray);
-
-                var options = {
-                    title: 'XYZ-анализ ' + (analysisType == 'attendance' ? 'посещаемости' : 'успеваемости'),
-                    hAxis: {
-                        title: 'Ученики'
-                    },
-                    vAxis: {
-                        title: analysisMeasure
-                    },
-                    legend: { position: 'none' },
-                    tooltip: { isHtml: true }
-                };
-
-                var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
-                chart.draw(data, options);
-            }
+            drawHistogramXYZ(currentResponse);
+            drawPieChartXYZ(currentResponse);
 
             // После отрисовки графика делаем блок с рекомендациями видимым
             document.getElementById('recommendations').style.display = 'block';
+
+            if (window.loadStudents) {
+                window.loadStudents();
+            }
+
         },
         error: function (jqXHR, textStatus, errorThrown) {
             console.error('AJAX Error:', textStatus, errorThrown);
@@ -1669,591 +1981,924 @@ function analyzeXYZData() {
         }
     });
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// Загрузка фото
-// document.addEventListener('DOMContentLoaded', function () {
-//     const photoInput = document.getElementById('photoInput');
-//     const photoPreviewContainer = document.getElementById('photoPreviewContainer');
-//     const photoUploadArea = document.getElementById('photoUploadArea');
 
-//     // Клик по области загрузки вызывает клик по input[type="file"] только если файл не выбран
-//     photoUploadArea.addEventListener('click', () => {
-//         photoInput.click();
-//     });
+// 2) Построение DataTable с колонкой-чекбокс и контекст-меню
+function drawTable(dataRows) {
+    // Получаем динамические ключи заголовков
+    const periodKeys = dataRows.length
+    ? Object.keys(dataRows[0].period)
+    : [];
 
-//     // Обновление превью фотографий
-//     photoInput.addEventListener('change', function () {
-//         photoPreviewContainer.innerHTML = ''; // Очищаем контейнер
-//         Array.from(photoInput.files).forEach((file, index) => {
-//             const reader = new FileReader();
-//             reader.onload = (e) => {
-//                 const wrapper = document.createElement('div');
-//                 wrapper.classList.add('photo-wrapper');
+    // Строим заголовки
+    const columns = [
+        {
+            title: '*',
+            className: 'select-checkbox',
+            orderable: false,
+            data: null,
+            defaultContent: ''
+        },
+        { title: '№', data: '№' },
+        { title: 'Ученики', data: 'Ученики' },
+        // Динамически по periodKeys
+        ...periodKeys.map(key => ({
+            title: key,
+            data: row => row.period[key] || 0,
+            className: 'period-cell editable',
+            createdCell: (td, cellData, rowData) => {
+                const quarter = key;
+                $(td)
+                    .empty()
+                    .addClass('period-cell editable')
+                    .attr('data-quarter', quarter)    // ← кладём атрибут сюда
+                    .css({ position: 'relative', overflow: 'visible' })
+                    .append(`<span class="period-value" contenteditable="true" data-quarter="${quarter}">${cellData}</span>`)
+                    .append(`
+                        <div class="edit-controls" contenteditable="false" style="display:none;">
+                            <button class="confirm btn-success btn-sm">✓</button>
+                            <button class="cancel  btn-danger  btn-sm">✕</button>
+                        </div>
+                    `);
+            }
+        })),
+        { title: analysisMeasure, data: 'Анализируемый период', name: 'sum',},
+        { title: 'Среднее значение', data: 'avg', name: 'avg', 
+            render: function(data, type, row) {
+            // при выводе (display, filter и т. п.) форматируем
+            return (typeof data === 'number') 
+              ? data.toFixed(2) 
+              : data;
+          } },
+        { title: 'Коэффициент вариации', data: 'Коэффициент вариации', name: 'cv' },
+        { title: 'Категория', name: 'cat', data: 'Категория', className: 'category-cell' }
+    ]
 
-//                 const img = document.createElement('img');
-//                 img.src = e.target.result;
+    // Если уже был DataTable — уничтожаем и сбрасываем выбор
+    if ($.fn.DataTable.isDataTable('#resTable')) {
+        $('#resTable tbody tr').each(function() {
+        $(this).removeClass('selected');
+        $(this).find('td.select-checkbox').html('').removeClass('selected-marker');
+        });
+        table.destroy();
+        $('#resTable').empty();
+    }
 
-//                 const removeButton = document.createElement('button');
-//                 removeButton.classList.add('remove-photo');
-//                 removeButton.innerText = '×';
-//                 removeButton.setAttribute('data-index', index);
+    // Находим индекс колонки Категория
+    const categoryIdx = columns.findIndex(col => col.data === 'Категория');
 
-//                 removeButton.addEventListener('click', () => {
-//                     removePhoto(index);
-//                 });
-
-//                 wrapper.appendChild(img);
-//                 wrapper.appendChild(removeButton);
-//                 photoPreviewContainer.appendChild(wrapper);
-//             };
-//             reader.readAsDataURL(file);
-//         });
-
-//         // Используем количество файлов в photoInput для проверки
-//         toggleUploadAreaVisibility();
-//     });
-
-//     // Поддержка Drag & Drop
-//     photoUploadArea.addEventListener('dragover', (e) => {
-//         e.preventDefault();
-//         photoUploadArea.style.borderColor = '#007bff';
-//     });
-
-//     photoUploadArea.addEventListener('dragleave', () => {
-//         photoUploadArea.style.borderColor = '#ccc';
-//     });
-
-//     photoUploadArea.addEventListener('drop', (e) => {
-//         e.preventDefault();
-//         const files = e.dataTransfer.files;
-//         photoInput.files = files;
-//         const event = new Event('change');
-//         photoInput.dispatchEvent(event);
-//     });
-
-//     // Удаление фотографии
-//     function removePhoto(indexToRemove) {
-//         const fileListArray = Array.from(photoInput.files);
-//         fileListArray.splice(indexToRemove, 1);
-
-//         // Обновляем input с файлами
-//         const dataTransfer = new DataTransfer();
-//         fileListArray.forEach((file) => dataTransfer.items.add(file));
-//         photoInput.files = dataTransfer.files;
-
-//         // Обновляем превью
-//         const event = new Event('change');
-//         photoInput.dispatchEvent(event);
-//     }
-
-//     // Функция для скрытия или отображения области загрузки
-//     function toggleUploadAreaVisibility() {
-//         if (photoInput.files.length > 0) {
-//             photoUploadArea.classList.add('hide');  // Скрываем блок с загрузкой
-//         } else {
-//             photoUploadArea.classList.remove('hide');  // Показываем блок с загрузкой
-//         }
-//     }
-// });
-
-document.addEventListener('DOMContentLoaded', function () {
-    const photoInput = document.getElementById('photoInput');
-    const photoPreviewContainer = document.getElementById('photoPreviewContainer');
-    const photoUploadArea = document.getElementById('photoUploadArea');
-    const deleteAllButton = document.getElementById('deleteAllButton');
-    const photoWrappers = document.querySelectorAll('.photo-wrapper');
-
-    // Переменная для хранения всех выбранных файлов
-    let filesArray = [];
-
-    // MultiDrag сортировка с использованием Sortable.js
-    const sortable = new Sortable(photoPreviewContainer, {
-        animation: 150,
-        multiDrag: true,
-        fallbackTolerance: 3, // Для выбора элементов на мобильных устройствах
-        selectedClass: 'selected',
-        dragClass: 'dragging',
-    });
-
-    photoUploadArea.addEventListener('click', () => {
-        photoInput.click();
-    });    
-
-    // Изменяем обработчик двойного клика
-    photoPreviewContainer.addEventListener('dblclick', function (event) {
-        const target = event.target;
-
-        // Проверяем, что двойной клик произошёл на контейнере фото (wrapper)
-        if (target.closest('.photo-wrapper')) {
-            const wrapper = target.closest('.photo-wrapper');
-
-            // Если у wrapper уже есть класс enlarged, убираем его
-            if (wrapper.classList.contains('enlarged')) {
-                wrapper.classList.remove('enlarged');
-            } else {
-                // Убираем класс enlarged у всех остальных фото
-                photoWrappers.forEach(w => w.classList.remove('enlarged'));
-
-                // Добавляем класс только для текущего фото-wrapper
-                wrapper.classList.add('enlarged');
+    // Инициализация
+    table = $('#resTable').DataTable({
+      data: dataRows,
+      columns: columns,
+      select: { style: 'multi', selector: 'td.select-checkbox', info: false },
+      order: [ categoryIdx, 'asc' ], // сортируем по категории
+      // сразу 100 строк
+      pageLength: 100,
+      lengthMenu: [ [10, 25, 50, 100], [10, 25, 50, 100] ],
+      dom: 'lBfrtip',
+      buttons: [
+        {
+        extend: 'copyHtml5',
+        text:    'Копировать',
+        className: 'btn btn-outline-secondary btn-sm'
+        },
+        {
+        extend: 'excelHtml5',
+        text:    'Excel',
+        className: 'btn btn-outline-success btn-sm'
+        },
+        {
+        extend: 'pdfHtml5',
+        text:    'PDF',
+        className: 'btn btn-outline-danger btn-sm'
+        },
+        {
+        extend: 'print',
+        text:    'Печать',
+        className: 'btn btn-outline-primary btn-sm'
+        },
+        {
+            text: 'Сбросить таблицу',
+            className: 'btn btn-outline-warning btn-sm',
+            action: function() {
+                // Восстанавливаем исходные данные
+                currentResponse = JSON.parse(JSON.stringify(originalResponse));
+                // Сбросим метод классификации на дефолт (если нужно)
+                lastMethod = 'cv';
+                // Перерисуем таблицу и всё остальное
+                drawTable(currentResponse);
+                showMetrics(currentResponse);
+                drawHistogramXYZ(currentResponse);
+                drawPieChartXYZ(currentResponse);
             }
         }
+    ],
+    paging:    true,
+    searching: true,
+    ordering:  true,
+      language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/ru.json',
+        select: {
+            // скрываем колонки/ячейки
+            columns: "",
+            cells:   "",
+            // оставляем только строки, и начинаем её с перевода строки
+            rows: {
+                0:  "",                                // когда 0 — ничего не выводим
+                1:  "\nВыбрана 1 запись",              // для одной
+                _:  "\nВыбрано %d записей"             // для остальных, %d → число :contentReference[oaicite:1]{index=1}
+            }
+        },
+       },
+      createdRow: function(row,rowData){
+        const $row = $(row);
+        // 1) категория
+        const $cat = $row.find('td.category-cell')
+                        .attr('title','Правый‑клик: изменить категорию');
+        // 2) чек‑бокс‑ячейка
+        const $chk = $row.find('td.select-checkbox')
+                        .attr('title','Правый‑клик: автоклассификация');
+
+        const cat = rowData['Категория'];
+        if (typeof cat === 'string') {
+            $(row).addClass('row-category-' + cat.toLowerCase());
+        }
+      }
     });
 
-    photoInput.addEventListener('change', function () {
-        // Добавляем новые файлы в массив
-        const newFiles = Array.from(this.files);
-        filesArray = [...filesArray, ...newFiles]; // Объединяем старые и новые файлы
-    
-        // Обновляем photoInput
-        updatePhotoInput(); // ///////////////////////////П/О/М/Е/Н/Я/Л////////////////////////////////////////////////////////////////////////////
-
-        // Рендерим все актуальные файлы
-        renderPreviews();
-    });
-    
-    // Рендеринг всех актуальных превью
-    function renderPreviews() {
-        photoPreviewContainer.innerHTML = ''; // Очищаем контейнер превью
-    
-        // Для каждого файла в массиве рендерим превью
-        filesArray.forEach((file, index) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const wrapper = document.createElement('div');
-                wrapper.classList.add('photo-wrapper');
-    
-                const img = document.createElement('img');
-                img.src = e.target.result;
-    
-                const removeButton = document.createElement('button');
-                removeButton.classList.add('remove-photo');
-                removeButton.innerText = '×';
-    
-                // Удаление фотографии по индексу
-                removeButton.addEventListener('click', () => {
-                    removePhoto(index); // Удаляем файл по индексу
-                });
-    
-                wrapper.appendChild(img);
-                wrapper.appendChild(removeButton);
-                photoPreviewContainer.appendChild(wrapper);
-            };
-            reader.readAsDataURL(file);
-        });
-    
-        toggleDeleteAllButton(); // Обновляем видимость кнопки "Удалить все"
-    }
-    
-    // Показываем или скрываем кнопку "Удалить все фото"
-    function toggleDeleteAllButton() {
-        if (filesArray.length > 0) {
-            deleteAllButton.classList.remove('hide');
-        } else {
-            deleteAllButton.classList.add('hide');
-        }
-    }
-
-    // Удаление фотографии по индексу
-    function removePhoto(indexToRemove) {
-        // Удаляем файл из массива по индексу
-        filesArray.splice(indexToRemove, 1);
-
-        // Обновляем файл в photoInput
-        updatePhotoInput();
-
-        // Перерисовываем превью
-        renderPreviews();
-    }
-
-    // Обновление photoInput.files
-    function updatePhotoInput() {
-        const dataTransfer = new DataTransfer();
-        filesArray.forEach((file) => dataTransfer.items.add(file));
-        photoInput.files = dataTransfer.files; // Обновляем input с новыми файлами
-    }
-
-    // Удаление всех фото
-    deleteAllButton.addEventListener('click', () => {
-        filesArray = []; // Очищаем массив файлов
-        photoInput.value = ''; // Сбрасываем input
-        renderPreviews(); // Перерисовываем пустое превью
-    });
-});
-
-
-
-document.addEventListener("DOMContentLoaded", function () {
-    const selectedDatesList = document.getElementById("selectedDatesList");
-    const selectedDates = new Map(); // Сохраняем выбранные даты с порядковым номером
-
-    // Инициализация Flatpickr
-    flatpickr("#calendarInput", {
-        mode: "multiple", // Позволяет выбирать несколько дат
-        inline: true, // Открыт сразу
-        dateFormat: "d-m-y", // Формат отображаемой даты
-        locale: "ru", // Устанавливаем язык на русский
-        onChange: function (selectedDatesArray) {
-            selectedDates.clear();
-            selectedDatesArray.forEach((date, index) => {
-                const formattedDate = formatDateToLocal(date);
-                selectedDates.set(formattedDate, index + 1);
-            });
-            renderSelectedDates();
-        }
-    });
-
-    // Отображение выбранных дат
-    function renderSelectedDates() {
-        selectedDatesList.innerHTML = "";
-        selectedDates.forEach((order, date) => {
-            const span = document.createElement("span");
-            span.textContent = `${order}: ${date}`;
-            selectedDatesList.appendChild(span);
-        });
-    }
-
-    // Функция для форматирования даты в локальном формате
-    function formatDateToLocal(date) {
-        const day = String(date.getDate()).padStart(2, "0");
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const year = date.getFullYear();
-        return `${day}-${month}-${year}`;
-    }
-});
-
-
-
-
-const photoInput = document.getElementById('photoInput');
-const selectedDatesList = document.getElementById('selectedDatesList');
-
-// function validateDatesAndPhotos() {
-//     const datesCount = selectedDatesList.children.length;
-//     const photosCount = photoInput.files.length;
-
-//     const message = document.getElementById('validationMessage');
-//     if (!message) {
-//         const validationDiv = document.createElement('div');
-//         validationDiv.id = 'validationMessage';
-//         document.querySelector('.containerForUploadPhotos').appendChild(validationDiv);
-//     }
-
-//     if (datesCount !== photosCount) {
-//         message.textContent = `Количество выбранных дат (${datesCount}) и загруженных фотографий (${photosCount}) не совпадает.`;
-//         message.style.color = 'red';
-//     } else {
-//         message.textContent = 'Все проверки пройдены.';
-//         message.style.color = 'green';
-//     }
-// }
-
-// function renderAttendanceTable(data) {
-//     const table = document.getElementById('studentTable');
-//     const thead = table.querySelector('thead');
-//     const tbody = table.querySelector('tbody');
-
-//     // Очищаем текущие данные
-//     thead.innerHTML = '';
-//     tbody.innerHTML = '';
-
-//     // Формируем заголовки
-//     const headerRow = document.createElement('tr');
-//     const dateHeader = document.createElement('th');
-//     dateHeader.textContent = 'Дата';
-//     const absentHeader = document.createElement('th');
-//     absentHeader.textContent = 'Отсутствующие';
-//     headerRow.appendChild(dateHeader);
-//     headerRow.appendChild(absentHeader);
-//     thead.appendChild(headerRow);
-
-//     // Заполняем строки
-//     Object.keys(data).forEach(date => {
-//         const row = document.createElement('tr');
-//         const dateCell = document.createElement('td');
-//         dateCell.textContent = date;
-
-//         const absentCell = document.createElement('td');
-//         absentCell.textContent = data[date]['absent'].join(', ');
-
-//         row.appendChild(dateCell);
-//         row.appendChild(absentCell);
-//         tbody.appendChild(row);
-//     });
-
-//     // Показываем таблицу
-//     document.querySelector('.containerTable').style.display = 'block';
-// }
-
-
-
-
-
-
-
-
-// Табличное заполнение с помощью фото
-$(document).ready(function () {
-    $('#photoUploadForm').on('submit', function (e) {
-        e.preventDefault();
-
-        // Очистка превью для показа распознавания
-        resetProgress()
-
-        const selectedDates = Array.from(document.getElementById('selectedDatesList').children)
-        .map(item => item.textContent); // Список выбранных дат
-
-        const uploadedPhotos = document.getElementById('photoInput').files; // Загруженные фотографии
-
-        // Получаем предмет и класс
-        const subject = document.getElementById('subjectSelectPhoto').value; // Предмет
-        const selectedClass = document.getElementById('classSelectPhoto').value; // Класс
-
-        // Если не выбраны предмет или класс
-        if (!subject || !selectedClass) {
-            alert('Пожалуйста, выберите предмет и класс.');
-            return;
-        }
-
-        // Проверка: соответствие количества дат и фотографий
-        if (selectedDates.length !== uploadedPhotos.length) {
-            alert('Количество выбранных дат и фотографий не совпадает. Убедитесь, что загружено фото для каждой даты.');
-            return;
-        }
-
-        // Подготовка данных для отправки
-        const formData = new FormData();
-        formData.append('subject', subject);
-        formData.append('class_name', selectedClass);
-        formData.append('dates', JSON.stringify(selectedDates)); // Массив дат в формате JSON
-
-        // Добавляем файлы
-        Array.from(uploadedPhotos).forEach(photo => formData.append('photos', photo));
+    // Навешиваем обработчики инлайн-редактирования
+    // делаем ячейку относительной, чтобы позиционировать кнопки
+    $('#resTable tbody')
+        // когда пользователь кликает внутрь span — сохраняем старое значение, но ещё не показываем кнопки
+        .on('focus', 'span.period-value', function() {
+            const $span = $(this).css('outline','none');
+            $span.data('oldValue', $span.text());
+            currentEditSpan = $span;
+        })
+        .on('focusin', 'span.period-value', function() {
+            $(this).siblings('.edit-controls').show();
+        })
+        // при вводе в span — показываем контролы (единожды)
+        .on('input', 'span.period-value', function() {
+            const $span = $(this);
+            $span.siblings('.edit-controls').show();
+        })
+        // клик по кнопкам
+        // новый, исправленный блок:
+        .on('click', '.edit-controls button', function(e) {
+            e.stopPropagation();
+            const $btn  = $(this);
+            const $td   = $btn.closest('td');                // получаем TD
+            const $span = $td.find('span.period-value');
+            const oldV  = parseFloat($span.data('oldValue'));
+            const newV  = parseFloat($span.text().trim());
+            const rowIdx= table.cell($td).index().row;
+            const quarter = $span.data('quarter');
         
-        $.ajax({
-            url: '/analyze_photos',
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function (response) {
-                // Очистка заголовков и строк таблицы перед добавлением новых данных
-                $('#studentTable thead').empty();
-                $('#studentTable tbody').empty();
+            if ($btn.hasClass('confirm')) {
+            if (isNaN(newV)) {
+                alert('Введите корректное число');
+                $span.text(oldV);                           // возвращаем старое значение
+            } else {
+                // 1) Обновляем данные
+                currentResponse[rowIdx].period[quarter] = newV;
+                recalcRow(rowIdx);
 
-                // Объединение пустых ячеек в заголовках
-                var prevHeader = null;
-                var colspan = 1;
-                
-                let emptyIndices = [];
-                var ind = 0;
-                
-                // Найти индексы пустых строк
-                response.data[0].forEach(function (cell) {
-                    if (cell === "") {
-                        emptyIndices.push(ind);
-                    }
-                    ind += 1;
-                });
-                
-                var theadRow = '<tr>';
-                response.columns.forEach(function (column, index) {
-                    // Первые две и последняя колонки - фиксированный rowspan
-                    if (index === 0 || index === 1 || index === response.columns.length - 1) {
-                        if (prevHeader !== null) {
-                            theadRow += `<th colspan="${colspan}">${prevHeader}</th>`;
-                            colspan = 1;
-                        }
-                        theadRow += `<th rowspan="3">${column}</th>`;
-                        prevHeader = null; // Сбрасываем заголовок
-                    } else {
-                        // Для остальных колонок вычисляем colspan
-                        if (column === "") {
-                            colspan++;
-                        } else {
-                            if (prevHeader !== null) {
-                                theadRow += `<th colspan="${colspan}">${prevHeader}</th>`;
-                                colspan = 1;
-                            }
-                            prevHeader = column;
-                        }
-                    }
-                });
-                theadRow += '</tr>';
-                $('#studentTable thead').append(theadRow);                
+                // 2) Обновляем сам span (оставляем contenteditable)
+                $span.text(newV);
 
-                var firstRow = '<tr>';
-                let lastHeader = null; // Последний найденный месяц
-                let monthColspan = 0;  // Количество колонок для текущего месяца
+                // 3) Обновляем остальные колонки через API
+                const avgCol = table.column('avg:name').index();
+                const cvCol  = table.column('cv:name').index();
+                const catCol = table.column('cat:name').index();
+                const sumCol = table.column('sum:name').index();
 
-                response.data[0].forEach(function (cell, index) {
-                    if (index > 1 && index < response.data[0].length - 1) { // Пропускаем первые две и последнюю колонки
-                        if (cell === "") {
-                            monthColspan++; // Увеличиваем счетчик пустых ячеек
-                        } else {
-                            if (lastHeader !== null) {
-                                // Добавляем предыдущий заголовок с накопленным colspan
-                                firstRow += `<th colspan="${monthColspan + 1}">${lastHeader}</th>`;
-                            }
-                            // Обновляем последний заголовок и сбрасываем счетчик
-                            lastHeader = cell;
-                            monthColspan = 0;
-                        }
-                    }
-                });
+                table
+                    .cell(rowIdx, avgCol).data(currentResponse[rowIdx].avg.toFixed(2))
+                    .cell(rowIdx, cvCol).data(currentResponse[rowIdx]['Коэффициент вариации'])
+                    .cell(rowIdx, catCol).data(currentResponse[rowIdx]['Категория'])
+                    .cell(rowIdx, sumCol).data(currentResponse[rowIdx]['Анализируемый период'])
+                    .draw(false);
 
-                // Обработка последнего заголовка (если он существует)
-                if (lastHeader !== null) {
-                    firstRow += `<th colspan="${monthColspan + 1}">${lastHeader}</th>`;
-                }
-
-                firstRow += '</tr>';
-                $('#studentTable thead').append(firstRow);
-
-
-                var secondRow = '<tr>';
-                response.data[1].forEach(function (cell) {
-                    if (cell !== "") {
-                        secondRow += `<th>${cell || ""}</th>`;
-                    }
-                });
-                secondRow += '</tr>';
-                $('#studentTable thead').append(secondRow);
-
-                var rowData = []; // Массив для хранения значений ячеек
-
-                // Заполнение данных в таблице, начиная с третьей строки
-                response.data.slice(2).forEach(function (row) {
-                    var newRow = '<tr>';
-                    row.forEach(function (cell) {
-                        var cellValue = cell !== null && cell !== undefined ? cell : "";
-                        newRow += `<td>${cellValue}</td>`;
-                        rowData.push(cellValue);
-                    });
-                    newRow += '</tr>';
-                    $('#studentTable tbody').append(newRow);
-                });
-
-                // Определение типа анализа на основе загруженных данных
-                var containsAverageGrade = response.columns.includes('Средняя оценка');
-                var containsAttendanceDays = response.columns.includes('Дни посещения');
-                var containsAllGrade = response.columns.includes('Год')
-
-                var allCellsGreaterThanFive = rowData.every(function (cellValue) {
-                    return parseFloat(cellValue) > 5;
-                });
-
-                var containsBOrOT = rowData.some(function (cellValue) {
-                    if (typeof cellValue === 'string') {
-                        return cellValue.includes('Б') || cellValue.includes('ОТ');
-                    }
-                    return false;
-                });
-
-                var analysisType = $('#analysisType');
-
-                if (containsAverageGrade && containsAttendanceDays && containsAllGrade) {
-                    // Default to performance if both are present
-                    analysisType.val('performance');
-                } else if (containsAverageGrade) {
-                    analysisType.val('performance');
-                } else if (containsAttendanceDays) {
-                    analysisType.val('attendance');
-                } else if (containsAllGrade && !allCellsGreaterThanFive) {
-                    analysisType.val('performance');
-                } else if ((containsAllGrade && allCellsGreaterThanFive) || containsBOrOT) {
-                    analysisType.val('attendance');
-                } else {
-                    alert('Ошибка: данные не соответствуют образцу загрузки.');
-                }
-
-                const analysisMeasure = $('#analysisMeasure');
-                analysisMeasure.empty(); // Очищаем существующие опции
-                
-                const excludedIndices = [0, 1]; // Пропускаем первые два столбца
-                const measures = new Set(); // Уникальные значения для опций
-                
-                // Функция проверки, что все значения в столбце, начиная с data[3], пустые
-                function isColumnEmptyInRows(data, columnIndex) {
-                    // Проверяем все строки, начиная с data[3]
-                    return data.slice(3).every(row => !row[columnIndex] || row[columnIndex] === "");
-                }
-
-                // Функция для фильтрации заголовков, исключая столбцы, в которых все значения пустые начиная с data[3]
-                function filterHeaders(headers, data) {
-                    return headers.filter((header, index) => {
-                        // Исключаем заголовки, если в соответствующем столбце, начиная с data[3], все значения пустые
-                        return !isColumnEmptyInRows(data, index);
-                    });
-                }
-
-                // Обработка всех возможных строк с заголовками
-                const headers = [
-                    ...filterHeaders(response.columns || [], response.data),  // Фильтруем для columns
-                    ...filterHeaders(response.data[0] || [], response.data),  // Фильтруем для data[0]
-                ];
-                
-                // Перебираем заголовки и добавляем уникальные значения
-                headers.forEach((header, index) => {
-                    if (!excludedIndices.includes(index)) {
-                        // Проверяем, если это строка, и она не пустая
-                        if (typeof header === "string" && header.trim() !== "") {
-                            measures.add(header.trim()); // Добавляем уникальное значение в measures
-                        }
-                        // Если это не строка, но не пустое значение (не null и не undefined)
-                        else if (header !== null && header !== undefined && header !== "") {
-                            measures.add(header); // Добавляем значение как есть
-                        }
-                    }
-                });
-                
-                // Генерация опций для селектора
-                measures.forEach((measure) => {
-                    analysisMeasure.append(`<option value="${measure}">${measure}</option>`);
-                });
-                
-                if(analysisMeasure?.length){
-                    // Если есть доступные опции, выбираем первую
-                    if (analysisMeasure.children().length > 0) {
-                        analysisMeasure.find('option').first().prop('selected', true);
-                    } else {
-                        alert('Нет доступных мер анализа.');
-                    }
-                }
-                
-
-                // Для XYZ-анализа
-                const startMeasure = $('#startQuarter');
-                startMeasure.empty(); // Очищаем существующие опции
-                const endMeasure = $('#endQuarter');
-                endMeasure.empty(); // Очищаем существующие опции
-
-                // Генерация опций для селектора
-                measures.forEach((measure) => {
-                    startMeasure.append(`<option value="${measure}">${measure}</option>`);
-                    endMeasure.append(`<option value="${measure}">${measure}</option>`);
-                });
-                
-                if(startMeasure?.length && endMeasure?.length){
-                    // Если есть доступные опции, выбираем первую
-                    if (startMeasure.children().length > 0 && endMeasure.children().length > 0) {
-                        startMeasure.find('option').first().prop('selected', true);
-                        endMeasure.find('option').first().prop('selected', true);
-                    } else {
-                        alert('Нет доступных мер анализа.');
-                    }
-                }
-                
-                $('.containerTable').css('display', 'table');
-            
-            },
-            error: function (jqXHR, textStatus, errorThrown) {
-                console.error('AJAX Error:', textStatus, errorThrown);
-                alert('Ошибка: Произошла ошибка при распознавании фото.');
+                // 4) Обновляем метрики и графики
+                showMetrics(currentResponse);
+                drawHistogramXYZ(currentResponse);
+                drawPieChartXYZ(currentResponse);
             }
+            } else {  // cancel
+                $span.text(oldV);
+            }
+        
+            // убираем контролы
+            $td.find('.edit-controls').hide();
+            currentEditSpan = null;
+        })
+        .on('focusout', 'span.period-value', function() {
+            const $span = $(this);
+            setTimeout(() => {
+              $span.siblings('.edit-controls').hide();
+            }, 150);
+    });
+
+
+    // При выборе строки
+    table.on('select', function(e, dt, type, indexes) {
+        indexes.forEach(i => {
+        const cell = table.cell(i, 0).node();
+        $(cell).html('*');
+        $(cell).addClass('selected-marker');
         });
     });
-});
+    
+    // При снятии выбора
+    table.on('deselect', function(e, dt, type, indexes) {
+        indexes.forEach(i => {
+          // убрать «*»
+          const cell = table.cell(i, 0).node();
+          $(cell).html('').removeClass('selected-marker');
+        });
+    });
+      
+    // Контекст-меню на чекбокс-колонке (для автоклассификации выбранных)
+    $('#resTable tbody').on('contextmenu','td.select-checkbox', function(e){
+      e.preventDefault();
+      const selIdx = table.rows({ selected: true }).indexes().toArray();
+      showContextMenu(e.pageX,e.pageY,'auto', selIdx);
+    });
+  
+    // Контекст-меню на ячейке «Категория» (для ручной/авто-одного)
+    $('#resTable tbody').on('contextmenu','td.category-cell', function(e){
+      e.preventDefault();
+      const idx = table.cell(this).index().row;
+      showContextMenu(e.pageX,e.pageY,'cell', [idx]);
+    });
+  }
+
+  // Пересчёт метрик для одной строки
+  function recalcRow(idx) {
+    const r = currentResponse[idx];
+    const vals = Object.values(r.period).map(v => +v);
+    const sum = vals.reduce((a,b) => a+b, 0);
+    const avg = vals.length ? sum/vals.length : 0;
+    const variance = vals.reduce((s,v) => s + (v-avg)*(v-avg), 0) / (vals.length||1);
+    const stddev = Math.sqrt(variance);
+    const cvPct = avg ? (stddev/avg*100) : 0;
+  
+    r['Анализируемый период']     = sum;
+    r.avg                         = avg;
+    r['Коэффициент вариации']     = `${cvPct.toFixed(2)}%`;
+  
+    // Переклассификация по текущему методу (например, храните последний выбранный)
+    r['Категория'] = classifyByMethod(r, lastMethod);
+
+    // Теперь подкрашиваем <tr> в соответствии с новой категорией:
+    const $row = $(table.row(idx).node());
+    // убираем старые классы
+    $row.removeClass('row-category-x row-category-y row-category-z');
+    // добавляем новый
+    $row.addClass('row-category-' + r['Категория'].toLowerCase());
+  }
+  
+
+  // 3) Всплывающее меню — общий обработчик
+function showContextMenu(x,y, mode, rows) {
+    const $menu = $('#category-menu')
+        .css({ left: x, top: y })
+        .show();
+  
+    // Показываем нужные секции
+    $menu.find('.section-manual')[mode==='cell' ? 'show':'hide']();
+    $menu.find('.section-auto')[mode!=='cell' ? 'show':'hide']();
+
+    // сброс старых
+    $menu.find('.menu-item').off('click');
+    $menu.find('.btn-reset').off('click');
+  
+    // Ручная замена
+    $menu.find('.manual').on('click', function(){
+      const newCat = $(this).data('cat');
+      rows.forEach(r => updateCell(r,newCat));
+      $menu.hide();
+    });
+  
+    // Автоклассификация
+    $menu.find('.auto').on('click', function() {
+        const method = $(this).data('method');
+
+        lastMethod = method; // сохраняем текущий метод для пересчета
+
+        const scope  = $(this).hasClass('one') ? 'one' : 'all';
+
+        // При методе allowed — обновляем порог из меню
+        if (method === 'allowed') {
+            maxAllowed = parseFloat($('#ctx-maxAllowed').val());
+            minAllowed = parseFloat($('#ctx-minAllowed').val());
+
+            if (minAllowed > maxAllowed) {
+                alert('Ошибка: мин. порог не может быть больше макс. порога');
+                return;
+            }
+        }
+
+        // Собираем индексы строк
+        let targetRows;
+        if (scope === 'one') {
+        targetRows = rows;               // выбранные строки (может быть одна)
+        } else {
+        targetRows = table.rows().indexes().toArray(); // все строки
+        }
+
+        // Применяем классификацию
+        targetRows.forEach(i => {
+        const newCat = classifyByMethod(currentResponse[i], method);
+        updateCell(i, newCat);
+        });
+
+        $menu.hide();
+    });
+
+    $menu.find('.btn-reset').on('click', () => {
+        // восстанавливаем логику:
+        currentResponse = JSON.parse(JSON.stringify(originalResponse));
+        // восстанавливаем данные
+        drawTable(currentResponse);
+        showMetrics(currentResponse);
+        drawHistogramXYZ(currentResponse);
+        drawPieChartXYZ(currentResponse);
+        $menu.hide();
+    });
+
+    // Скрыть меню при клике вне
+    $(document).off('click.ctx').on('click.ctx', e => {
+        if (!$(e.target).closest('#category-menu').length) {
+        $menu.hide();
+        $(document).off('click.ctx');
+        }
+    });
+  }
+
+// 4) Обновление одной ячейки и всей строки
+function updateCell(rowIdx, newCat) {
+    // Обновляем текущий массив
+    currentResponse[rowIdx]['Категория'] = newCat;
+  
+    // 1) Находим индекс колонки «cat»
+    const catColIdx = table.column('cat:name').index();
+  
+    // 2) Записываем в нужную ячейку
+    table.cell(rowIdx, catColIdx).data(newCat);
+  
+    // 3) Перерисовываем строку
+    table.row(rowIdx).invalidate().draw(false);
+  
+    // 4) Перекрашиваем <tr>
+    const $r = $(table.row(rowIdx).node());
+    $r.removeClass('row-category-x row-category-y row-category-z')
+      .addClass('row-category-' + newCat.toLowerCase());
+  
+    // 5) Снимаем выбор через API
+    table.row(rowIdx).deselect();
+  
+    // Обновляем метрики и графики
+    showMetrics(currentResponse);
+    drawHistogramXYZ(currentResponse);
+    drawPieChartXYZ(currentResponse);
+  }
+  
+  // 5) Классификация по методу
+  function classifyByMethod(r, method) {
+    let vPct;
+
+    if (method === 'avgAbsence') {
+        vPct = (r.avg / maxAvg) * 100;
+    }
+    else if (method === 'sumAbsence') {
+        vPct = (r['Анализируемый период'] / maxSum) * 100;
+    }
+    else if (method === 'allowed') {
+        // единый метод для мин+макс порогов
+        const val = r['Анализируемый период'];
+        if (val < minAllowed)      return 'X';
+        else if (val > maxAllowed) return 'Z';
+        else                        return 'Y';
+    }
+    else { // CV уже в %
+        vPct = parseFloat(r['Коэффициент вариации'].replace('%', ''));
+    }
+
+    if (vPct <= thresholdX){
+        return 'X';
+    }              
+    else if (vPct <= thresholdX + thresholdY) {
+        return 'Y';
+    }
+    else {
+        return 'Z';
+    }
+}
+
+  function showMetrics(data) {
+    const cnt = { X: 0, Y: 0, Z: 0 };
+    data.forEach(r => cnt[r['Категория']]++);
+  
+    document.getElementById('metricsCards').style.display = 'flex';
+    document.querySelectorAll('details').forEach(d => d.style.display = 'block');
+    document.getElementById('filters-form').style.display = 'block';
+    $('#totalCount').text(data.length);
+    $('#countX').text(cnt.X);
+    $('#countY').text(cnt.Y);
+    $('#countZ').text(cnt.Z);
+  }
+
+// «Пробрасываем» в глобальный scope
+window.analyzeXYZData = analyzeXYZData;
+
+///////////////////Г/Р/А/Ф/И/К/И////X///Y////Z///А///Н//А//Л//И//З/А///////////////////////////
+// === 3. Гистограмма ===
+function drawHistogramXYZ(dataRows) {
+    // подготовка данных
+    const categories = dataRows.map(r => r['Ученики']);
+    const values = dataRows.map(r => +r['Анализируемый период']);
+    const colors = dataRows.map(r =>
+      r['Категория'] === 'X' ? 'green'
+      : r['Категория'] === 'Y' ? 'yellow'
+      : 'red'
+    );
+  
+    // инициализация ECharts
+    const chartDom = document.getElementById('chart_histogram');
+    const myChart = echarts.init(chartDom);
+  
+    // опции
+    const option = {
+      title: {
+        text: 'Гистограмма',
+        left: 'center',
+        textStyle: { fontSize: 20 }
+      },
+      grid: { top: 60, left: 50, right: 30, bottom: 50 },
+      xAxis: {
+        type: 'category',
+        name: 'Ученики',
+        data: categories,
+        axisLabel: { rotate: 45, interval: 0 }
+      },
+      yAxis: {
+        type: 'value',
+        name: analysisMeasure
+      },
+      tooltip: {
+        trigger: 'item',
+        formatter: params => {
+          const i = params.dataIndex;
+          const r = dataRows[i];
+          return `
+            <div style="padding:5px;">
+              <b>${r['Ученики']}</b><br/>
+              <b>${analysisMeasure}: ${r['Анализируемый период']}</b><br/>
+              <b>Категория: ${r['Категория']}</b>
+            </div>
+          `;
+        },
+        backgroundColor: 'rgba(255,255,255,0.9)',
+        borderColor: '#aaa',
+        borderWidth: 1,
+        textStyle: { color: '#333' },
+        extraCssText: 'box-shadow: 0 0 5px rgba(0,0,0,0.3);'
+      },
+      series: [{
+        name: analysisMeasure,
+        type: 'bar',
+        data: values.map((v, idx) => ({
+          value: v,
+          itemStyle: { color: colors[idx] }
+        })),
+        barWidth: '60%',
+        emphasis: {
+          itemStyle: { opacity: 0.8 }
+        }
+      }]
+    };
+  
+    // отрисовка
+    myChart.setOption(option);
+  
+    // при изменении размера окна – ресайз графика
+    window.addEventListener('resize', () => myChart.resize());
+  }
+
+
+function drawPieChartXYZ(data) {
+    const chartDom = document.getElementById('chart_pie3d');
+    const myChart  = echarts.init(chartDom, 'myLight');
+
+    // подготовка данных
+    const counts = { X: 0, Y: 0, Z: 0 };
+    data.forEach(r => {
+        const cat = r['Категория'];
+        if (cat === 'X') counts.X++;
+        if (cat === 'Y') counts.Y++;
+        if (cat === 'Z') counts.Z++;
+        }
+    );    
+  
+    // готовим градиенты
+    const gradientColors = [
+      new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+        { offset: 0, color: '#4CAF50' },
+        { offset: 1, color: '#8BC34A' }
+      ]),
+      new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+        { offset: 0, color: '#FFEB3B' },
+        { offset: 1, color: '#FFC107' }
+      ]),
+      new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+        { offset: 0, color: '#F44336' },
+        { offset: 1, color: '#E91E63' }
+      ])
+    ];
+  
+    // приводим в формат для 2D pie
+    const data2d = [
+      { value: counts.X, name: 'X категория' },
+      { value: counts.Y, name: 'Y категория' },
+      { value: counts.Z, name: 'Z категория' }
+    ];
+  
+    myChart.setOption({
+      title: {
+        text: 'Соотношение учащихся по группам',
+        left:   'center',
+        top:    20,
+        textStyle: { fontSize: 20 }
+      },
+      tooltip: {
+        trigger: 'item',
+        formatter: '{b}: {c} ({d}%)'
+      },
+      legend: {
+        orient: 'vertical',
+        left:   20,
+        top:    'middle',
+        data:   data2d.map(d => d.name)
+      },
+      series: [{
+        type: 'pie',
+        radius: '60%',
+        center: ['50%', '55%'],
+        data: data2d.map((d, i) => ({
+          value: d.value,
+          name:  d.name,
+          itemStyle: {
+            color:       gradientColors[i],
+            shadowBlur:  20,
+            shadowColor: 'rgba(0,0,0,0.2)'
+          }
+        })),
+        label: {
+          show:      true,
+          formatter: '{b}\n{d}%',
+          fontSize:  12,
+          lineHeight: 18
+        },
+        labelLine: {
+          length:  15,
+          length2: 10,
+          smooth:  true,
+          lineStyle: { width: 2 }
+        },
+        emphasis: {
+          itemStyle: {
+            shadowBlur:  30,
+            shadowColor: 'rgba(0,0,0,0.3)'
+          },
+          label: {
+            fontSize:   16,
+            fontWeight: 'bold'
+          }
+        },
+        animationType:   'scale',
+        animationEasing: 'elasticOut',
+        animationDelay:  idx => idx * 200
+      }]
+    });
+  }
+
+// let pieCountsXYZ = { X: 0, Y: 0, Z: 0 };
+// // === 3. Гистограмма ===
+// function drawHistogramXYZ(dataRows, measure) {
+//     // подготовка данных
+//     const categories = dataRows.map(r => r['Ученики']);
+//     const values = dataRows.map(r => +r['Анализируемый период']);
+//     const colors = dataRows.map(r =>
+//       r['Категория'] === 'X' ? 'green'
+//       : r['Категория'] === 'Y' ? 'yellow'
+//       : 'red'
+//     );
+  
+//     // инициализация ECharts
+//     const chartDom = document.getElementById('chart_histogram');
+//     const myChart = echarts.init(chartDom);
+  
+//     // опции
+//     const option = {
+//       title: {
+//         text: 'Гистограмма',
+//         left: 'center',
+//         textStyle: { fontSize: 20 }
+//       },
+//       grid: { top: 60, left: 50, right: 30, bottom: 50 },
+//       xAxis: {
+//         type: 'category',
+//         name: 'Ученики',
+//         data: categories,
+//         axisLabel: { rotate: 45, interval: 0 }
+//       },
+//       yAxis: {
+//         type: 'value',
+//         name: measure
+//       },
+//       tooltip: {
+//         trigger: 'item',
+//         formatter: params => {
+//           const i = params.dataIndex;
+//           const r = dataRows[i];
+//           return `
+//             <div style="padding:5px;">
+//               <b>${r['Ученики']}</b><br/>
+//               <b>${measure}: ${r['Анализируемый период']}</b><br/>
+//               <b>Категория: ${r['Категория']}</b>
+//             </div>
+//           `;
+//         },
+//         backgroundColor: 'rgba(255,255,255,0.9)',
+//         borderColor: '#aaa',
+//         borderWidth: 1,
+//         textStyle: { color: '#333' },
+//         extraCssText: 'box-shadow: 0 0 5px rgba(0,0,0,0.3);'
+//       },
+//       series: [{
+//         name: measure,
+//         type: 'bar',
+//         data: values.map((v, idx) => ({
+//           value: v,
+//           itemStyle: { color: colors[idx] }
+//         })),
+//         barWidth: '60%',
+//         emphasis: {
+//           itemStyle: { opacity: 0.8 }
+//         }
+//       }]
+//     };
+  
+//     // отрисовка
+//     myChart.setOption(option);
+  
+//     // при изменении размера окна – ресайз графика
+//     window.addEventListener('resize', () => myChart.resize());
+//   }
+
+
+// function drawPieChartXYZ(counts) {
+//     const chartDom = document.getElementById('chart_pie3d');
+//     const myChart  = echarts.init(chartDom, 'myLight');
+  
+//     // готовим градиенты
+//     const gradientColors = [
+//       new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+//         { offset: 0, color: '#4CAF50' },
+//         { offset: 1, color: '#8BC34A' }
+//       ]),
+//       new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+//         { offset: 0, color: '#FFEB3B' },
+//         { offset: 1, color: '#FFC107' }
+//       ]),
+//       new echarts.graphic.LinearGradient(0, 0, 1, 1, [
+//         { offset: 0, color: '#F44336' },
+//         { offset: 1, color: '#E91E63' }
+//       ])
+//     ];
+  
+//     // приводим в формат для 2D pie
+//     const data2d = [
+//       { value: counts.X, name: 'X категория' },
+//       { value: counts.Y, name: 'Y категория' },
+//       { value: counts.Z, name: 'Z категория' }
+//     ];
+  
+//     myChart.setOption({
+//       title: {
+//         text: 'Соотношение учащихся по группам',
+//         left:   'center',
+//         top:    20,
+//         textStyle: { fontSize: 20 }
+//       },
+//       tooltip: {
+//         trigger: 'item',
+//         formatter: '{b}: {c} ({d}%)'
+//       },
+//       legend: {
+//         orient: 'vertical',
+//         left:   20,
+//         top:    'middle',
+//         data:   data2d.map(d => d.name)
+//       },
+//       series: [{
+//         type: 'pie',
+//         radius: '60%',
+//         center: ['50%', '55%'],
+//         data: data2d.map((d, i) => ({
+//           value: d.value,
+//           name:  d.name,
+//           itemStyle: {
+//             color:       gradientColors[i],
+//             shadowBlur:  20,
+//             shadowColor: 'rgba(0,0,0,0.2)'
+//           }
+//         })),
+//         label: {
+//           show:      true,
+//           formatter: '{b}\n{d}%',
+//           fontSize:  12,
+//           lineHeight: 18
+//         },
+//         labelLine: {
+//           length:  15,
+//           length2: 10,
+//           smooth:  true,
+//           lineStyle: { width: 2 }
+//         },
+//         emphasis: {
+//           itemStyle: {
+//             shadowBlur:  30,
+//             shadowColor: 'rgba(0,0,0,0.3)'
+//           },
+//           label: {
+//             fontSize:   16,
+//             fontWeight: 'bold'
+//           }
+//         },
+//         animationType:   'scale',
+//         animationEasing: 'elasticOut',
+//         animationDelay:  idx => idx * 200
+//       }]
+//     });
+//   }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ////////////////////////////////////////////////////
+// Помощник: разбить response.columns (первая строка) на группы { month, start, indexes }
+function getHeaderGroups(columns) {
+    const groups = [];
+    let current = null;
+
+    columns.forEach((col, idx) => {
+        const text = String(col || "").trim();
+        if (text) {
+            if (current) groups.push(current);
+            current = { month: text, start: idx, indexes: [idx] };
+        } else if (current) {
+            current.indexes.push(idx);
+        }
+    });
+    if (current) groups.push(current);
+    return groups;
+}
+
+// Помощник: проверяет, есть ли в колонке idx хоть одно непустое значение среди строк data[3..]
+function isColumnNonEmpty(data, idx) {
+    return data.slice(3).some(row => {
+        const v = row[idx];
+        return v !== "" && v != null;
+    });
+}
+
+export function measuresAdd(response) {
+    const excludedStarts = [0, 1];            // отбрасываем «№» и «Ученики»
+    const data = response.data || [];
+    const header1 = response.columns || [];   // первая строка thead
+    const header2 = data[0] || [];            // вторая строка thead
+    const header3 = data[1] || [];            // третья строка thead (если есть)
+
+    // теперь — убеждаемся, что header3[0] пустая, и при этом есть хотя бы одна «дневная» колонка
+    const hasThirdLevel = 
+        String(header3[0] || "").trim() === "" && 
+        header3.some((cell, idx) => 
+            idx > 1 &&                     // пропускаем первые две «№» и «Ученики»
+            String(cell || "").trim()      // находим хоть одну непустую ячейку в третьем ряду
+        );
+
+    const measures = new Set();
+    const analysisMeasure = $('#analysisMeasure').empty();
+    const startQuarter   = $('#startQuarter').empty();
+    const endQuarter     = $('#endQuarter').empty();
+
+    if (hasThirdLevel) {
+        // --- ТРЁХУРОВНЕВЫЙ РЕЖИМ ---
+        // 1) Группируем header1 (годы и итоговые столбцы)
+        const topGroups = getHeaderGroups(header1)
+            .filter(g => !excludedStarts.includes(g.start));
+
+        topGroups.forEach(top => {
+            const yearText = String(top.month).trim();
+
+            // 2) Если год (четыре цифры) — обрабатываем его как верхний уровень
+            if (/^\d{4}$/.test(yearText)) {
+                measures.add(yearText);  // добавляем «2025» и т.п.
+
+                // 3) Для этого года группируем месяцы по header2
+                //    Сначала делаем срез header2 по индексам top.indexes
+                const subHeader2 = top.indexes.map(i => header2[i]);
+                const monthGroups = getHeaderGroups(subHeader2).map(mg => ({
+                    month:   mg.month,
+                    // переводим локальные индексы mg.indexes обратно в глобальные
+                    indexes: mg.indexes.map(localIdx => top.indexes[localIdx])
+                }));
+
+                monthGroups.forEach(mg => {
+                    const monthName = String(mg.month).trim();
+                    if (!monthName) return;
+                    measures.add(`${monthName} ${yearText}`);             // добавляем «Апрель 2025»
+                    // 4) Внутри каждого monthGroup: по header3 — отдельные дни
+                    mg.indexes.forEach(colIdx => {
+                        const dayText = String(header3[colIdx] || "").trim();
+                        if (!dayText) return;
+                        // проверяем, есть ли данные в колонке
+                        if (!isColumnNonEmpty(data, colIdx)) return;
+                        // например: «21 Апрель 2025»
+                        measures.add(`${dayText} ${monthName} ${yearText}`);
+                    });
+                });
+
+            } else {
+                // 5) Итоговые столбцы (например, «Итог за период»)
+                measures.add(yearText);
+            }
+        });
+
+    } else {
+        // --- ДВУХУРОВНЕВЫЙ РЕЖИМ ---
+
+        // 1) Собираем группы и исключаем первые две
+        let groups = getHeaderGroups(response.columns || []);
+        groups = groups.filter(g => !excludedStarts.includes(g.start));
+
+        // 2) Оставляем только группы с хоть одной оценкой
+        const good = groups.filter(g => 
+            g.indexes.some(i => isColumnNonEmpty(data, i))
+        );
+
+        // 3) Пройдём по каждой «живой» группе:
+        good.forEach(g => {
+            // 3.1) добавляем месяц/период, если это не «Учебные периоды»
+            if (g.month !== "Учебные периоды") {
+                measures.add(g.month);
+            }
+
+            // 3.2) Добавим её дочерние заголовки:
+            g.indexes.forEach(i => {
+                const h2 = String(header2[i] || "").trim();
+                if (!h2) return;                   // пропускаем пустые
+
+                // проверяем, есть ли в этой колонке хоть одна оценка
+                if (!isColumnNonEmpty(data, i)) return;
+
+                let name;
+                if (/^\d+$/.test(h2)) {
+                    // дата → добавляем «число + месяц»
+                    name = `${h2} ${g.month}`;
+                } else {
+                    // строковый заголовок (например, "1 четверть") → берём как есть
+                    name = h2;
+                }
+                measures.add(name);
+            });
+        });
+    }
+
+    // 4) Заполняем селект
+    if (measures.size === 0) {
+        alert('Нет доступных мер анализа.');
+        return;
+    }
+    measures.forEach(m => {
+        analysisMeasure.append(`<option value="${m}">${m}</option>`);
+    });
+    analysisMeasure.find('option').first().prop('selected', true);
+
+    measures.forEach(m => {
+        startQuarter.append(`<option value="${m}">${m}</option>`);
+        endQuarter  .append(`<option value="${m}">${m}</option>`);
+    });
+    if (startQuarter.children().length && endQuarter.children().length) {
+        startQuarter.find('option').first().prop('selected', true);
+        endQuarter  .find('option').first().prop('selected', true);
+    }
+}
+
+window.measuresAdd = measuresAdd;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 // Функция переключения вкладок
@@ -2270,118 +2915,5 @@ function openTab(evt, tabId) {
     document.getElementById(tabId).classList.add('active');
     evt.currentTarget.classList.add('active');
 }
-
-
-// // Получение обновления прогресса
-// socket.on('photo_processed', function (data) {
-//     const progress = document.getElementById('progress');
-//     progress.textContent = `Обработано фото ${data.photo_index} из ${data.total_photos}`;
-    
-//     const processedPhotos = document.getElementById('processedPhotos');
-//     const studentList = data.recognized_students.map(id => `<li>Студент ID: ${id}</li>`).join('');
-//     processedPhotos.innerHTML += `<p>Фото ${data.photo_index}: <ul>${studentList}</ul></p>`;
-// });
-
-// // Получение превью обработанного фото
-// socket.on('photo_preview', function (data) {
-//     const photoPreviewContainer = document.getElementById('photoPreviewContainer');
-//     const img = document.createElement('img');
-//     img.src = `data:image/jpeg;base64,${data.image}`;
-//     img.className = 'photo-preview';
-//     photoPreviewContainer.appendChild(img);
-// });
-
-// // Получение ошибок
-// socket.on('processing_error', function (data) {
-//     alert(`Ошибка обработки: ${data.error}`);
-// });
-
-const socket = io.connect();
-
-// Массив для хранения фото
-let photos = [];
-let currentPhotoIndex = 0;
-let isInfoVisible = false; // Флаг для отображения текстовой информации
-
-// Очистка перед загрузкой
-function resetProgress() {
-    photos = [];
-    currentPhotoIndex = 0;
-    document.getElementById('progressText').textContent = 'Обработано фото 0 из 0';
-    document.getElementById('progressBarFill').style.width = '0%';
-    document.getElementById('processedPhotos').innerHTML = '';
-    document.getElementById('photoCounter').textContent = 'Фото 0 из 0';
-    updateCarousel();
-}
-
-// Обновление карусели
-function updateCarousel() {
-    const currentPhoto = document.getElementById('currentPhoto');
-    currentPhoto.src = photos[currentPhotoIndex] || '/static/placeholder.jpeg';
-
-    const photoCounter = document.getElementById('photoCounter');
-    photoCounter.textContent = `Фото ${currentPhotoIndex + 1} из ${photos.length}`;
-}
-
-// Переключение фото
-document.getElementById('prevPhoto').addEventListener('click', () => {
-    if (photos.length > 0) {
-        currentPhotoIndex = (currentPhotoIndex - 1 + photos.length) % photos.length;
-        updateCarousel();
-    }
-});
-
-document.getElementById('nextPhoto').addEventListener('click', () => {
-    if (photos.length > 0) {
-        currentPhotoIndex = (currentPhotoIndex + 1) % photos.length;
-        updateCarousel();
-    }
-});
-
-// Кнопка сворачивания информации
-document.getElementById('toggleInfo').addEventListener('click', () => {
-    const processedPhotos = document.getElementById('processedPhotos');
-    isInfoVisible = !isInfoVisible;
-
-    if (isInfoVisible) {
-        processedPhotos.style.display = 'block';
-        document.getElementById('toggleInfo').textContent = 'Скрыть информацию';
-    } else {
-        processedPhotos.style.display = 'none';
-        document.getElementById('toggleInfo').textContent = 'Показать информацию';
-    }
-});
-
-// Обработка событий от сокета
-socket.on('photo_processed', function (data) {
-    const progressBarFill = document.getElementById('progressBarFill');
-    const progressText = document.getElementById('progressText');
-
-    // Обновление прогресса
-    const progressPercentage = (data.photo_index / data.total_photos) * 100;
-    progressBarFill.style.width = `${progressPercentage}%`;
-    progressText.textContent = `Обработано фото ${data.photo_index} из ${data.total_photos}`;
-    
-    // Добавление информации о студентах
-    if (data.recognized_students) {
-        const processedPhotos = document.getElementById('processedPhotos');
-        const studentList = data.recognized_students
-            .map(name => `<li>ФИО ученика: ${name}</li>`)
-            .join('');
-        processedPhotos.innerHTML += `<p>Фото ${data.photo_index}: <ul>${studentList}</ul></p>`;
-    }
-});
-
-socket.on('photo_preview', function (data) {
-    // Добавление фото в карусель
-    const photoSrc = `data:image/jpeg;base64,${data.image}`;
-    if (!photos.includes(photoSrc)) { // Предотвращение дублирования
-        photos.push(photoSrc);
-        updateCarousel();
-    }
-});
-
-// Обработка ошибок
-socket.on('processing_error', function (data) {
-    alert(`Ошибка обработки: ${data.error}`);
-});
+// «Пробрасываем» в глобальный scope
+window.openTab = openTab;

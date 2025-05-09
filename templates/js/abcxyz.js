@@ -281,8 +281,6 @@ function loadDataABCXYZ() {
     });
 }
 
-
-
 // Табличное заполнение
 $(document).ready(function () {
     $('#uploadFormABCXYZ').on('submit', function (e) {
@@ -571,7 +569,7 @@ $(document).ready(function () {
 });
 
 
-// ABC-анализ
+// ABCXYZ-анализ
 function analyzeABCXYZData() {
     var tableData1 = [];
     var columns1 = [];
@@ -690,145 +688,128 @@ function analyzeABCXYZData() {
             analysisHeader.style.display = 'block';
             analysisHeader.textContent = 'ABC/XYZ-анализ успеваемости и посещаемости'
 
-            $('#resTable thead').empty();
-            var headerRow = '<tr>';
-            headerRow += '<th>№</th>';
-            headerRow += '<th>Ученики</th>';
-            headerRow += `<th>Оценки за ${analysisMeasure}</th>`;
-            headerRow += `<th>Посещение: ${analysisMeasure0}</th>`;
-            headerRow += '<th>Процент</th>';
-            headerRow += '<th>Кумулятивный процент</th>';
-            headerRow += '<th>Коэффициент вариации</th>';
-            headerRow += '<th>Категория</th>';
-            headerRow += '</tr>';
-            $('#resTable thead').append(headerRow);
+            // 1) Считаем количество по категориям
+            // Подсчёт категорий
+            const counts = { AX: 0, BX: 0, CX: 0,
+                 AY: 0, BY: 0, CY: 0,
+                AZ: 0, BZ: 0, CZ: 0 };
 
-            var sumMeasure1 = 0;
-            var sumMeasure2 = 0;
-
-            $('#resTable tbody').empty();
-            response.forEach(function (row) {
-                var rowClass;
-                if (row['Категория'] === 'AX') {
-                    rowClass = 'row-category-ax';
-                } else if (row['Категория'] === 'AY') {
-                    rowClass = 'row-category-ay';
-                } else if (row['Категория'] === 'AZ') {
-                    rowClass = 'row-category-az';
-                } else if (row['Категория'] === 'BX') {
-                    rowClass = 'row-category-bx';
-                } else if (row['Категория'] === 'BY') {
-                    rowClass = 'row-category-by';
-                } else if (row['Категория'] === 'BZ') {
-                    rowClass = 'row-category-bz';
-                } else if (row['Категория'] === 'CX') {
-                    rowClass = 'row-category-cx';
-                } else if (row['Категория'] === 'CY') {
-                    rowClass = 'row-category-cy';
-                } else if (row['Категория'] === 'CZ') {
-                    rowClass = 'row-category-cz';
-                }                
-
-                var newRow = `<tr class="${rowClass}">`;
-                newRow += `<td>${row['№']}</td>`;
-                newRow += `<td>${row['Ученики']}</td>`;
-                newRow += `<td>${row[analysisMeasure]}</td>`;
-                newRow += `<td>${row["Анализируемый период"]}</td>`;
-                newRow += `<td>${row['Процент']}</td>`;
-                newRow += `<td>${row['Кумулятивный процент']}</td>`;
-                newRow += `<td>${row['Коэффициент вариации']}</td>`;
-                newRow += `<td>${row['Категория']}</td>`;
-                newRow += '</tr>';
-                sumMeasure1 += parseFloat(row[analysisMeasure].toFixed(2));
-                sumMeasure2 += parseFloat(row["Анализируемый период"]);
-                $('#resTable tbody').append(newRow);
+            response.forEach(r => {
+            const cat = r['Категория'];
+            if (cat === 'AX') counts.AX++;
+            if (cat === 'AY') counts.AY++;
+            if (cat === 'AZ') counts.AZ++;
+            if (cat === 'BX') counts.BX++;
+            if (cat === 'BY') counts.BY++;
+            if (cat === 'BZ') counts.BZ++;
+            if (cat === 'CX') counts.CX++;
+            if (cat === 'CY') counts.CY++;
+            if (cat === 'CZ') counts.CZ++;
             });
 
-            var newRow = '<tr>';
-            newRow += `<td>Сумма</td>`;
-            newRow += `<td>-</td>`;
-            newRow += `<td>${sumMeasure1}</td>`;
-            newRow += `<td>${sumMeasure2}</td>`;
-            newRow += `<td>-</td>`;
-            newRow += `<td>100%</td>`;
-            newRow += `<td>-</td>`;
-            newRow += `<td>-</td>`;
-            newRow += '</tr>';
-            $('#resTable tbody').append(newRow);
-
-            $('.containerTable1').css('display', 'table');
-
-            google.charts.load('current', { packages: ['corechart'] });
-            google.charts.setOnLoadCallback(drawChart);
-    
-            var chart;
-            var data;
-            var options;
-    
-            function getCategoryColor(category) {
-                switch(category) {
-                    case 'AX':
-                        return 'rgb(49, 255, 49)'; // Зеленый
-                    case 'AY':
-                        return 'rgb(150, 255, 49)'; // Светло-зеленый
-                    case 'AZ':
-                        return 'rgb(207, 255, 95)'; // Салатовый
-                    case 'BX':
-                        return 'rgb(255, 255, 0)'; // Желтый
-                    case 'BY':
-                        return 'rgb(255, 227, 66)'; // Желто-оранжевый
-                    case 'BZ':
-                        return 'rgb(255, 183, 0)'; // Оранжевый
-                    case 'CX':
-                        return 'rgb(255, 72, 0)'; // Красный
-                    case 'CY':
-                        return 'rgb(255, 87, 65)'; // Красный-розовый
-                    case 'CZ':
-                        return 'rgb(255, 0, 0)'; // Красный
-                    default:
-                        return 'rgb(0, 0, 0)'; // Черный по умолчанию
-                }
-            }
-    
-            function drawChart() {
-                var dataArray = [
-                    ['Ученики', 'Оценка за ' + analysisMeasure, 'Посещение за ' + analysisMeasure0, 'Категория']
+            // 2) подготовим массив строк для DataTables
+            var dtData = response.map(function(r){
+                return [
+                r['№'],
+                r['Ученики'],
+                r[analysisMeasure],
+                r['Анализируемый период'],
+                r['Процент'],
+                r['Кумулятивный процент'],
+                r['Коэффициент вариации'],
+                r['Категория']
                 ];
-    
-                response.forEach(function (row) {
-                    var category = row['Категория'];
-                    var tooltip = category;
-                    dataArray.push([row['Ученики'], parseFloat(row[analysisMeasure]), parseFloat(row["Анализируемый период"]), tooltip]);
-                });
-    
-                data = google.visualization.arrayToDataTable(dataArray);
-    
-                options = {
-                    title: 'ABC/XYZ-анализ успеваемости и посещаемости',
-                    hAxis: {
-                        title: 'Оценка',
-                        minValue: 0, // Устанавливаем минимальное значение для оси X
-                        maxValue: 6
-                    },
-                    vAxis: {
-                        title: 'Количество пропусков',
-                        minValue: 0, // Устанавливаем минимальное значение для оси Y
-                        maxValue: 25
-                    },
-                    legend: { position: 'none' },
-                    tooltip: { isHtml: true },
-                    colors: response.map(function(row) { return getCategoryColor(row['Категория']); }),
-                    explorer: {
-                        actions: ['dragToZoom', 'rightClickToReset'],
-                        axis: 'horizontal_and_vertical',
-                        keepInBounds: true,
-                        maxZoomIn: 0.1
-                    }
-                };
-    
-                chart = new google.visualization.BubbleChart(document.getElementById('chart_div'));
-                chart.draw(data, options);
+            });
+            
+            // 3) инициализация
+            if ( $.fn.DataTable.isDataTable('#resTable') ) {
+                $('#resTable').DataTable().clear().destroy();
             }
+            
+            $('#resTable').DataTable({
+                data: dtData,
+                columns: [
+                { title: '№' },
+                { title: 'Ученики' },
+                { title: `Оценки за ${analysisMeasure}` },
+                { title: `Посещение: ${analysisMeasure0}` },
+                { title: 'Процент' },
+                { title: 'Кумулятивный процент' },
+                { title: 'Коэффициент вариации' },
+                { title: 'Категория' }
+                ],
+
+                // отключаем первичную сортировку
+                order: [],
+
+                // сразу 100 строк
+                pageLength: 100,
+                lengthMenu: [ [10, 25, 50, 100], [10, 25, 50, 100] ],
+
+                // экспорт-кнопки
+                dom: 'lBfrtip',
+                buttons: [
+                    {
+                    extend: 'copyHtml5',
+                    text:    'Копировать',
+                    className: 'btn btn-outline-secondary btn-sm'
+                    },
+                    {
+                    extend: 'excelHtml5',
+                    text:    'Excel',
+                    className: 'btn btn-outline-success btn-sm'
+                    },
+                    {
+                    extend: 'pdfHtml5',
+                    text:    'PDF',
+                    className: 'btn btn-outline-danger btn-sm'
+                    },
+                    {
+                    extend: 'print',
+                    text:    'Печать',
+                    className: 'btn btn-outline-primary btn-sm'
+                    }
+                ],
+
+                paging:    true,
+                searching: true,
+                ordering:  true,
+                language:  { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/ru.json' },
+               
+                createdRow: function(row, data){
+                // раскрашиваем строку по категории в последнем столбце
+                var cat = data[7]; // колонка «Категория»
+                if (cat === 'AX') $(row).addClass('row-category-ax');
+                if (cat === 'AY') $(row).addClass('row-category-ay');
+                if (cat === 'AZ') $(row).addClass('row-category-az');
+                if (cat === 'BX') $(row).addClass('row-category-bx');
+                if (cat === 'BY') $(row).addClass('row-category-by');
+                if (cat === 'BZ') $(row).addClass('row-category-bz');
+                if (cat === 'CX') $(row).addClass('row-category-cx');
+                if (cat === 'CY') $(row).addClass('row-category-cy');
+                if (cat === 'CZ') $(row).addClass('row-category-cz');
+                }
+            });
+
+            pieCountsABCXYZ = counts; // запомним для переключения
+
+            // 4) Метрики
+            // Показываем карточки метрик и блоки
+            document.getElementById('metricsCards').style.display = 'flex';
+            document.querySelectorAll('details').forEach(d => d.style.display = 'block');
+            document.getElementById('totalCount').textContent = response.length;
+            document.getElementById('countAX').textContent = counts.AX;
+            document.getElementById('countAY').textContent = counts.AY;
+            document.getElementById('countAZ').textContent = counts.AZ;
+            document.getElementById('countBX').textContent = counts.BX;
+            document.getElementById('countBY').textContent = counts.BY;
+            document.getElementById('countBZ').textContent = counts.BZ;
+            document.getElementById('countCX').textContent = counts.CX;
+            document.getElementById('countCY').textContent = counts.CY;
+            document.getElementById('countCZ').textContent = counts.CZ;
+            // 5) Рисуем все графики
+            drawEChartsBubble(response, analysisMeasure, analysisMeasure0);
+            drawPieChartABCXYZ(pieCountsABCXYZ);
             
             // После отрисовки графика делаем блок с рекомендациями видимым
             document.getElementById('recommendations').style.display = 'block';
@@ -839,3 +820,180 @@ function analyzeABCXYZData() {
         }
     });
 }
+
+let pieCountsABCXYZ = { AX: 0, BX: 0, CX: 0, AY: 0, BY: 0, CY: 0,
+    AZ: 0, BZ: 0, CZ: 0};
+
+function drawPieChartABCXYZ(counts) {
+    const chartDom = document.getElementById('chart_pie3d');
+    if (!chartDom) return;
+    const myChart  = echarts.init(chartDom, 'myLight');
+
+    // 1) Определяем 9 групп с их цветами
+    const groups = [
+        { key: 'AX', title: 'AX категория', color: '#00ff00' },
+        { key: 'AY', title: 'AY категория', color: '#99ff00' },
+        { key: 'AZ', title: 'AZ категория', color: '#cfff5f' },
+        { key: 'BX', title: 'BX категория', color: '#ffff00' },
+        { key: 'BY', title: 'BY категория', color: '#ffe344' },
+        { key: 'BZ', title: 'BZ категория', color: '#ffb700' },
+        { key: 'CX', title: 'CX категория', color: '#ff4800' },
+        { key: 'CY', title: 'CY категория', color: '#ff5731' },
+        { key: 'CZ', title: 'CZ категория', color: '#ff0000' }
+    ];
+
+    // 2) Собираем data для pie
+    const data = groups.map(g => ({
+        name: g.title,
+        value: counts[g.key] || 0,
+        itemStyle: { color: g.color }
+    }));
+
+    myChart.setOption({
+        title: {
+        text: 'Соотношение учащихся по группам',
+        left: 'center',
+        top: 20,
+        textStyle: { fontSize: 20 }
+        },
+        tooltip: {
+        trigger: 'item',
+        formatter: '{b}: {c} ({d}%)'
+        },
+        legend: {
+        orient: 'vertical',
+        left: 20,
+        top: 'middle',
+        data: data.map(d => d.name)
+        },
+        series: [{
+        type: 'pie',
+        radius: '60%',
+        center: ['60%', '55%'],
+        data,
+        label: {
+            show: true,
+            formatter: '{b}\n{d}%',
+            fontSize: 12
+        },
+        labelLine: {
+            length: 10,
+            length2: 5
+        },
+        emphasis: {
+            itemStyle: {
+            shadowBlur: 20,
+            shadowColor: 'rgba(0,0,0,0.3)'
+            },
+            label: {
+            fontSize: 14,
+            fontWeight: 'bold'
+            }
+        },
+        animationType: 'scale',
+        animationEasing: 'elasticOut',
+        animationDelay: idx => idx * 100
+        }]
+    });
+}
+
+function drawEChartsBubble(response, analysisMeasure, analysisMeasure0) {
+    const chartDom = document.getElementById('chart_div');
+    if (!chartDom) return;
+    const chart = echarts.init(chartDom, 'myLight');
+  
+    // 1) Подготовка сырых точек и подсчёт дубликатов по (x,y)
+    const pairsCount = {};
+    const raw = response.map(row => {
+      const x = parseFloat(row[analysisMeasure]);
+      const y = parseFloat(row['Анализируемый период']);
+      const key = `${x}_${y}`;
+      pairsCount[key] = (pairsCount[key] || 0) + 1;
+      return {
+        name: row['Ученики'],
+        x, y,
+        cumPct: parseFloat(row['Кумулятивный процент']),
+        category: row['Категория']
+      };
+    });
+  
+    // 2) Преобразуем в data для ECharts
+    const data = raw.map(item => {
+      return {
+        name: item.name,
+        value: [ item.x, item.y, item.cumPct ],
+        category: item.category,
+        duplicate: pairsCount[`${item.x}_${item.y}`] > 1
+      };
+    });
+  
+    const colorMap = {
+      AX: '#00ff00', AY: '#99ff00', AZ: '#cfff5f',
+      BX: '#ffff00', BY: '#ffe344', BZ: '#ffb700',
+      CX: '#ff4800', CY: '#ff5731', CZ: '#ff0000'
+    };
+  
+    chart.setOption({
+      title: {
+        text: 'Распределение учеников по оценкам и пропускам',
+        left: 'center'
+      },
+      tooltip: {
+        trigger: 'item',
+        formatter: params => {
+          const [x, y, pct] = params.value;
+          return `
+            <strong>${params.name}</strong><br/>
+            Оценка: ${x}<br/>
+            Пропуски: ${y}<br/>
+            Кум. %: ${pct.toFixed(1)}%<br/>
+            Категория: ${params.data.category}
+          `;
+        }
+      },
+      xAxis: { name: 'Оценка', type: 'value', min: 0, max: 6 },
+      yAxis: { name: 'Пропуски', type: 'value', min: 0, max: 25 },
+      dataZoom: [
+        { type: 'inside', xAxisIndex: 0, yAxisIndex: 0 },
+        { type: 'slider', xAxisIndex: 0, bottom: 10 }
+      ],
+      series: [{
+        name: 'Ученики',
+        type: 'scatter',
+        data,
+        symbolSize: d => d[2] / 100 * 40 + 8,
+        itemStyle: {
+          color: params => colorMap[params.data.category] || '#888'
+        },
+        emphasis: {
+          label: {
+            show: true,
+            formatter: params => params.data.name,
+            fontSize: 14,
+            color: '#000',
+            position: 'right'
+          },
+          itemStyle: {
+            borderColor: '#333',
+            borderWidth: 2
+          }
+        },
+        label: {
+          show: true,
+          formatter: params => params.data.duplicate ? '' : params.data.name,
+          fontSize: 12,
+          color: '#333',
+          position: 'right',
+          distance: 8
+        },
+        avoidLabelOverlap: true,
+        labelLayout: {
+          hideOverlap: false,
+          moveOverlap: 'shiftY'
+        },
+        animationDuration: 1000,
+        animationEasing: 'cubicOut'
+      }]
+    });
+  }
+  

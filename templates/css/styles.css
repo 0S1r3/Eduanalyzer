@@ -85,7 +85,13 @@ h2 {
     margin-bottom: 30px;
 }
 
-.containerTable {
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+/* .containerTable {
     width: 90%;
     margin: 0 auto;
     padding: 20px;
@@ -93,12 +99,6 @@ h2 {
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     text-align: center;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
 }
 
 .containerTable table, .containerTable td {
@@ -113,7 +113,7 @@ table {
     padding: 8px;
     text-align: center;
     background-color: #828eff;
-}
+} */
 
 form {
     margin-bottom: 20px;
@@ -211,11 +211,13 @@ input[type="submit"]:hover {
     right: 0;
     transform: translateY(-50%);
     border-radius: 50%;
+    z-index: 1000; /* Установка z-index для меню настроек */
 }
 
 .settings-btn img {
     width: 20px;
     height: 20px;
+    z-index: 1000; /* Установка z-index для меню настроек */
 }
 
 .settings-menu {
@@ -375,32 +377,7 @@ input[type="submit"]:hover {
     background-color: #f2f2f2;
 }
 
-.containerTable button {
-    background-color: #007bff; /* Синий цвет фона */
-    color: white; /* Цвет текста */
-    padding: 10px 20px; /* Внутренние отступы */
-    border: none; /* Убираем границу */
-    border-radius: 5px; /* Скругленные углы */
-    font-size: 16px; /* Размер шрифта */
-    cursor: pointer; /* Курсор в виде руки при наведении */
-    transition: background-color 0.3s ease; /* Плавное изменение цвета фона */
-}
-
-.containerTable button:hover {
-    background-color: #0056b3; /* Темно-синий цвет при наведении */
-}
-
-.containerTable button:active {
-    background-color: #004494; /* Еще темнее при нажатии */
-    transform: scale(0.98); /* Легкое уменьшение кнопки при нажатии */
-}
-
-.containerTable button:focus {
-    outline: none; /* Убираем обводку при фокусе */
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.5); /* Добавляем тень при фокусе */
-}
-
-.containerTable1 {
+/* .containerTable1 {
     width: 90%;
     margin: 0 auto;
     padding: 20px;
@@ -420,7 +397,7 @@ input[type="submit"]:hover {
     border: 1px solid #474747;
     padding: 8px;
     text-align: center;
-}
+} */
 
 .row-category-a {
     background-color: rgb(49, 255, 49);
@@ -1007,3 +984,615 @@ label {
 .toggle-info-button:hover {
     background-color: #0056b3;
 }
+
+
+
+
+/* СТИЛИ ДЛЯ РЕЗУЛЬТИРУЮЩЕЙ ТАБЛИЦЫ И ГРАФИКОВ */
+.metrics-cards {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .metrics-cards .card {
+    flex: 1;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+  }
+  .metrics-cards .card-title { font-size: 1.0rem; color: #333232; }
+  .metrics-cards .card-value { font-size: 1.5rem; font-weight: bold; }
+  details { margin-bottom: 1rem; }
+  summary { cursor: pointer; font-weight: bold; }
+
+/* Основной контейнер таблицы */
+.styled-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    font-family: Arial, sans-serif;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    text-align: center; /* выравнивание текста по центру */
+  }
+  
+  /* Заголовки */
+  .styled-table thead th {
+    background-color: #007bff;
+    color: #ffffff;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    position: sticky;
+    top: 0;
+    /* граница снизу для «сетки» */
+    border: 1px solid black; /* черная сетка */
+  }
+  
+  /* Сетка: границы у всех ячеек */
+  .styled-table th,
+  .styled-table td {
+    border: 1px solid black; /* черная сетка */
+    text-align: center; /* выравнивание текста по центру */
+  }
+  
+  /* Ячейки тела */
+  .styled-table tbody td {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    color: #333;
+  }
+  
+  /* Зебро-полосы */
+  .styled-table tbody tr:nth-child(odd) {
+    background-color: #f8faff;
+  }
+  
+  /* Hover-эффект по строке */
+  .styled-table tbody tr:hover {
+    background-color: #e6f0ff;
+  }
+  
+  /* Скругления у первой и последней ячейки заголовка */
+  .styled-table thead th:first-child {
+    border-top-left-radius: 8px;
+  }
+  .styled-table thead th:last-child {
+    border-top-right-radius: 8px;
+  }
+  
+  /* Скругления у первой и последней ячейки футера (если нужен) */
+  .styled-table tfoot td:first-child {
+    border-bottom-left-radius: 8px;
+  }
+  .styled-table tfoot td:last-child {
+    border-bottom-right-radius: 8px;
+  }
+
+
+  /* НОВЫЕ СТИЛИ ДЛЯ ИСХОДНОЙ ТАБЛИЦЫ */
+  /* Основной контейнер таблицы */
+.containerTable {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    font-family: Arial, sans-serif;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    text-align: center;
+  }
+  
+  /* Заголовки */
+  .containerTable thead th {
+    background-color: #007bff;
+    color: #ffffff;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    position: sticky;
+    top: 0;
+    /* граница снизу для «сетки» */
+    border: 1px solid black; /* черная сетка */
+  }
+  
+  /* Сетка: границы у всех ячеек */
+  .containerTable th,
+  .containerTable td {
+    border: 1px solid black; /* черная сетка */
+    text-align: center; /* Центрируем текст в ячейках */
+  }
+  
+  /* Ячейки тела */
+  .containerTable tbody td {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    color: #333;
+  }
+  
+  /* Зебро-полосы */
+  .containerTable tbody tr:nth-child(odd) {
+    background-color: #f8faff;
+  }
+  
+  /* Hover-эффект по строке */
+  .containerTable tbody tr:hover {
+    background-color: #e6f0ff;
+  }
+  
+  /* Скругления у первой и последней ячейки заголовка */
+  .containerTable thead th:first-child {
+    border-top-left-radius: 8px;
+  }
+  .containerTable thead th:last-child {
+    border-top-right-radius: 8px;
+  }
+  
+  /* Скругления у первой и последней ячейки футера (если нужен) */
+  .containerTable tfoot td:first-child {
+    border-bottom-left-radius: 8px;
+  }
+  .containerTable tfoot td:last-child {
+    border-bottom-right-radius: 8px;
+  }
+
+
+  /* Кнопка containerTable */
+  .containerTable button {
+    background-color: #007bff; /* Синий цвет фона */
+    color: white; /* Цвет текста */
+    padding: 10px 20px; /* Внутренние отступы */
+    border: none; /* Убираем границу */
+    border-radius: 5px; /* Скругленные углы */
+    font-size: 16px; /* Размер шрифта */
+    cursor: pointer; /* Курсор в виде руки при наведении */
+    transition: background-color 0.3s ease; /* Плавное изменение цвета фона */
+}
+
+.containerTable button:hover {
+    background-color: #0056b3; /* Темно-синий цвет при наведении */
+}
+
+.containerTable button:active {
+    background-color: #004494; /* Еще темнее при нажатии */
+    transform: scale(0.98); /* Легкое уменьшение кнопки при нажатии */
+}
+
+.containerTable button:focus {
+    outline: none; /* Убираем обводку при фокусе */
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.5); /* Добавляем тень при фокусе */
+}
+
+/* ===== Стили для <details> и <summary> ===== */
+details {
+    margin-bottom: 1rem;
+    border: 1px solid #d0d0d0;
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  
+  details summary {
+    list-style: none;
+    padding: 10px 16px;
+    background-color: #f0f8ff;
+    color: #007bff;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+  }
+  
+  details summary::-webkit-details-marker {
+    display: none;
+  }
+  
+  details[open] summary {
+    background-color: #d0ebff;
+  }
+  
+  details div {
+    padding: 12px 16px;
+  }
+
+  /* ЦЕНТРАЛИЗОВАННЫЙ КОНТЕЙНЕР */
+  .container-centered {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    padding: 2rem;
+  }
+
+
+
+
+  /* Отдельное оформление для категорий A/B/C/X/Y/Z/AX/AY/AZ/BX/BY/BZ/CX/CY/CZ */
+.row-category-a td { background-color: #00ff00; }
+.row-category-b td { background-color: #f6ff00; }
+.row-category-c td { background-color: #ff0000; }
+.row-category-x td { background-color: #00ff00; }
+.row-category-y td { background-color: #f6ff00; }
+.row-category-z td { background-color: #ff0000; }
+.row-category-ax td { background-color: #00ff00; }
+.row-category-ay td { background-color: #99ff00; }
+.row-category-az td { background-color: #cfff5f; }
+.row-category-bx td { background-color: #ffff00; }
+.row-category-by td { background-color: #ffe344; }
+.row-category-bz td { background-color: #ffb700; }
+.row-category-cx td { background-color: #ff4800; }
+.row-category-cy td { background-color: #ff5731; }
+.row-category-cz td { background-color: #ff0000; }
+
+
+/* СТИЛИ ДЛЯ ФОРМЫ ГРАФИКА */
+form#filters-form {
+    max-width: 600px;
+    margin: 0 auto;
+    background: #ffffff;
+    border: 1px solid #b3e5fc;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .filter-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+
+  .filter-row label {
+    width: 140px;
+    font-weight: bold;
+    color: #0277bd;
+  }
+
+  .filter-row select {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #81d4fa;
+    border-radius: 4px;
+    background: #e1f5fe;
+    color: #01579b;
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .filter-row select:focus {
+    border-color: #0288d1;
+    box-shadow: 0 0 5px rgba(2, 136, 209, 0.5);
+    outline: none;
+  }
+
+  #filters-form button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background: #0288d1;
+    border: none;
+    border-radius: 4px;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  #filters-form button:hover {
+    background: #0277bd;
+  }
+
+  form#filter-form-no-selector-graph {
+    max-width: 600px;
+    margin: 0 auto;
+    background: #ffffff;
+    border: 1px solid #b3e5fc;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  #filter-form-no-selector-graph button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background: #0288d1;
+    border: none;
+    border-radius: 4px;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  #filter-form-no-selector-graph button:hover {
+    background: #0073ff;
+  }
+
+
+    /* Стили для контекстного меню */
+/* общий контейнер */
+#category-menu {
+    position: absolute;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    padding: 8px;
+    min-width: 200px;
+    font-family: Arial, sans-serif;
+    z-index: 10000;
+    display: none;
+  }
+  
+  /* секции */
+  #category-menu .menu-section {
+    font-weight: bold;
+    margin-top: 8px;
+    margin-bottom: 4px;
+    color: #444;
+  }
+  
+  /* списки пунктов */
+  #category-menu .submenu {
+    list-style: none;
+    padding: 0;
+    margin: 4px 0 8px;
+  }
+  
+  #category-menu .submenu li {
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  #category-menu .submenu li:hover {
+    background: #f0f0f0;
+  }
+  
+  /* кнопки внизу меню */
+  #category-menu .menu-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+  }
+  
+  #category-menu .menu-footer button {
+    padding: 4px 8px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+  }
+  
+  #category-menu .btn-confirm {
+    background-color: #28a745;
+    color: white;
+  }
+  
+  #category-menu .btn-reset {
+    background-color: #dc3545;
+    color: white;
+  }
+
+/* Стили для выделенных строк в таблице */
+  table.dataTable tbody tr.selected {
+    outline: 2px solid #61a0ff; /* Bootstrap синий */
+    outline-offset: -1px;
+    background-color: #e7f1ff !important;
+  }
+  
+  /* Специальный стиль для ячеек со звездочкой */
+  .selected-marker {
+    font-weight: bold;
+    color: #61a0ff;
+    text-align: center;
+  }
+
+  /* Показываем, что по чек‑бокс‑ячейке можно кликать */
+#resTable td.select-checkbox {
+    cursor: pointer;
+  }
+  
+  /* При наведении на любую строку чуть подсвечиваем фон */
+  #resTable tbody tr:hover {
+    background-color: rgba(97, 160, 255, 0.1) !important;
+  }
+  
+  /* При наведении на чек‑бокс‑ячейку — ещё ярче */
+  #resTable td.select-checkbox:hover {
+    background-color: rgba(97, 160, 255, 0.2) !important;
+  }
+  
+
+  /* все ячейки, у которых есть контекст‑меню */
+#resTable td.select-checkbox,
+#resTable td.category-cell {
+  cursor: context-menu;           /* курсор «правый‑клик» */
+}
+
+/* лёгкая подсветка при hover */
+#resTable td.select-checkbox:hover,
+#resTable td.category-cell:hover {
+  background-color: rgba(97,160,255,0.1) !important;
+}
+
+
+/* Контекстное меню для редактирования периодов */
+#period-menu {
+    position: absolute;
+    display: none;
+    background: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    padding: 4px 0;
+    margin: 0;
+    list-style: none;
+    z-index: 10000;
+    min-width: 200px;
+  }
+  
+  #period-menu li {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+  }
+  
+  #period-menu li:hover {
+    background-color: #f5f5f5;
+  }
+  
+  /* Опционально: разделители */
+  #period-menu li + li {
+    border-top: 1px solid #eaeaea;
+  }
+  
+  /* Чтобы меню не выделялось текстом при кликах */
+  #period-menu li {
+    user-select: none;
+  }
+
+  /* Всё ещё скрываем контролы */
+.period-cell .edit-controls {
+    display: none;
+    position: absolute;
+    top: -28px;     /* чуть выше ячейки */
+    right: 0;
+    gap: 4px;
+    z-index: 1000;
+    /* убрали фон здесь, цвет задаём у кнопок */
+  }
+  
+  /* Стили кнопок */
+  .period-cell .edit-controls .btn-success {
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .period-cell .edit-controls .btn-danger {
+    background-color: #dc3545;
+    color: #fff;
+    border: none;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  /* при наведении чуть прозрачнее */
+  .period-cell .edit-controls button:hover {
+    opacity: 0.9;
+  }
+
+  
+  /* Общий стиль для всех кнопок DataTables */
+.dataTables_wrapper .dt-button {
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    color: #374151;
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 6px 14px;
+    margin: 0 6px 12px 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+  }
+  
+  /* Hover — чуть подсветка и подъём */
+  .dataTables_wrapper .dt-button:hover {
+    background-color: #f3f4f6;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    transform: translateY(-1px);
+  }
+  
+  /* Active (нажатие) — «утопление» кнопки */
+  .dataTables_wrapper .dt-button:active {
+    background-color: #e5e7eb;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+    transform: translateY(0);
+  }
+  
+  /* Reset-кнопка (по тексту) можно выделить другим цветом фона */
+  .dataTables_wrapper .dt-button:contains('Сбросить') {
+    background-color: #fef3c7;
+    border-color: #fde68a;
+    color: #92400e;
+  }
+  .dataTables_wrapper .dt-button:contains('Сбросить'):hover {
+    background-color: #fde68a;
+  }
+  
+  /* Иконки или текст внутри по центру */
+  .dataTables_wrapper .dt-button .fa,
+  .dataTables_wrapper .dt-button .material-icons {
+    vertical-align: middle;
+    margin-right: 4px;
+  }
+  
+  /* Убираем повторный перенос строк */
+  .dataTables_wrapper .dt-buttons {
+    white-space: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+  }
+  
+
+
+    /* Стили для редактируемых ячеек */  
+  /* При наведении подчёркиваем рамкой и меняем курсор */
+  #resTable td.period-cell.editable:hover {
+    background-color: #ddf5ff;       /* чуть более тёплый при ховере */
+    border: 1px dashed #38b6ff;      /* пунктирная рамка «подсказка» */
+    cursor: text;                    /* курсор текстового поля */
+  }
+  
+  /* Можно ещё добавить иконку-ручку в углу ячейки */
+  #resTable td.period-cell.editable {
+    position: relative;
+  }
+  #resTable td.period-cell.editable::after {
+    content: "✎";
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 0.8em;
+    color: rgba(0,0,0,0.3);
+    pointer-events: none;  /* чтобы не мешать клику */
+  }
+  #resTable td.period-cell.editable:hover::after {
+    color: rgba(0,0,0,0.6);
+  }
+  
+
+
+  /* CSS-класс для подсветки выбранной период-ячейки */
+.selected-period-cell {
+    background-color: rgba(18, 206, 243, 0.2) !important;
+    outline: 2px dashed #12bff3 !important;
+  }
+  
+
+  /* Сама кнопка закрытия */
+#period-menu .close-period-menu {
+    text-align: right;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-weight: bold;
+    border-bottom: 1px solid #eaeaea;
+  }
+  
+  /* Подсветка при hover */
+  #period-menu .close-period-menu:hover {
+    background-color: #f5f5f5;
+  }
+  

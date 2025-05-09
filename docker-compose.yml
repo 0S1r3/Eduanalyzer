@@ -24,6 +24,7 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./dump.sql:/docker-entrypoint-initdb.d/dump.sql # Подключаем дамп
     networks:
       - app-network
     command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf", "-d", "1"]
